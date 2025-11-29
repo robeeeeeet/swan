@@ -38,17 +38,19 @@
 
 ## 2. 技術スタック
 
-| カテゴリ | 技術 | 選定理由 |
-|---------|------|----------|
-| フロントエンド | Next.js 14+ (App Router), TypeScript | React エコシステム、PWA対応が容易 |
-| スタイリング | Tailwind CSS | 高速開発、レスポンシブ対応 |
-| 状態管理 | Zustand | 軽量、シンプル |
-| データベース | Firebase Firestore | リアルタイム同期、スケーラブル |
-| 認証 | Firebase Auth | 匿名認証対応、ソーシャルログイン |
-| Push通知 | Firebase Cloud Messaging (FCM) | iOS/Android両対応 |
-| AI/LLM | Gemini 2.0 Flash API | 高速、日本語対応 |
-| ホスティング | Vercel | Cron Jobs、エッジ関数対応 |
-| PWA | next-pwa (Workbox) | Service Worker管理、キャッシュ戦略 |
+| カテゴリ | 技術 | バージョン | 選定理由 |
+|---------|------|-----------|----------|
+| フロントエンド | Next.js (App Router) | 16.0.5 | React エコシステム、PWA対応が容易 |
+| UI Framework | React | 19.2.0 | 最新のReactサーバーコンポーネント対応 |
+| 言語 | TypeScript | 5.x | 型安全、開発効率向上 |
+| スタイリング | Tailwind CSS | 4.x | 高速開発、レスポンシブ対応、PostCSS統合 |
+| 状態管理 | Zustand | 5.0.8 | 軽量、シンプル |
+| データベース | Firebase Firestore | 12.6.0 | リアルタイム同期、スケーラブル |
+| 認証 | Firebase Auth | 12.6.0 | 匿名認証対応、ソーシャルログイン |
+| Push通知 | Firebase Cloud Messaging | 12.6.0 | iOS/Android両対応 |
+| AI/LLM | Gemini 2.0 Flash API | - | 高速、日本語対応 |
+| ホスティング | Vercel | - | Cron Jobs、エッジ関数対応 |
+| PWA | @ducanh2912/next-pwa | 10.2.9 | Workbox統合、Next.js 16対応 |
 
 ---
 

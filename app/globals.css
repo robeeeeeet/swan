@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+:root {
+  /* Swan Design System - Color Palette */
+  --primary: #14b8a6; /* Teal-500 - 成長と健康 */
+  --primary-dark: #0d9488; /* Teal-600 */
+  --primary-light: #5eead4; /* Teal-300 */
+
+  --secondary: #f97316; /* Orange-500 - 温かみと励まし */
+  --secondary-dark: #ea580c; /* Orange-600 */
+  --secondary-light: #fb923c; /* Orange-400 */
+
+  /* Semantic Colors */
+  --success: #22c55e; /* Green-500 - 我慢成功 */
+  --success-bg: #dcfce7; /* Green-100 */
+
+  --warning: #f59e0b; /* Amber-500 - 目標超過 */
+  --warning-bg: #fef3c7; /* Amber-100 */
+
+  --error: #ef4444; /* Red-500 - システムエラー */
+  --error-bg: #fee2e2; /* Red-100 */
+
+  --neutral: #6b7280; /* Gray-500 - 喫煙記録（判断しない） */
+  --neutral-bg: #f3f4f6; /* Gray-100 */
+
+  /* Base Colors */
+  --background: #ffffff;
+  --foreground: #1f2937; /* Gray-800 */
+  --border: #e5e7eb; /* Gray-200 */
+
+  /* iOS Safe Area */
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
+  --safe-area-inset-right: env(safe-area-inset-right);
+}
+
+@theme inline {
+  /* Primary Colors */
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-light: var(--primary-light);
+
+  /* Secondary Colors */
+  --color-secondary: var(--secondary);
+  --color-secondary-dark: var(--secondary-dark);
+  --color-secondary-light: var(--secondary-light);
+
+  /* Semantic Colors */
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-error: var(--error);
+  --color-error-bg: var(--error-bg);
+  --color-neutral: var(--neutral);
+  --color-neutral-bg: var(--neutral-bg);
+
+  /* Base Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+
+  /* Typography - Noto Sans JP */
+  --font-sans: var(--font-noto-sans-jp), system-ui, -apple-system, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #111827; /* Gray-900 */
+    --foreground: #f9fafb; /* Gray-50 */
+    --border: #374151; /* Gray-700 */
+
+    --neutral-bg: #1f2937; /* Gray-800 */
+    --success-bg: #064e3b; /* Green-900 */
+    --warning-bg: #78350f; /* Amber-900 */
+    --error-bg: #7f1d1d; /* Red-900 */
+  }
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-feature-settings: "tnum" 1; /* Tabular figures for numbers */
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  padding-top: var(--safe-area-inset-top);
+  padding-bottom: var(--safe-area-inset-bottom);
+  padding-left: var(--safe-area-inset-left);
+  padding-right: var(--safe-area-inset-right);
+}
+
+/* Accessibility - Minimum touch target 44px */
+button,
+a,
+input,
+select,
+textarea {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Focus visible for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

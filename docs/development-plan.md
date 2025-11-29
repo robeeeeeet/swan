@@ -12,17 +12,19 @@
 
 ## 2. 技術スタック
 
-| カテゴリ | 技術 |
-|---------|------|
-| フロントエンド | Next.js 14+ (App Router), TypeScript |
-| スタイリング | Tailwind CSS |
-| 状態管理 | Zustand |
-| データベース | Firebase Firestore |
-| 認証 | Firebase Auth（匿名認証対応） |
-| Push通知 | Firebase Cloud Messaging (FCM) |
-| AI/LLM | Gemini 2.0 Flash API |
-| ホスティング | Vercel（Cron Jobs活用） |
-| PWA | next-pwa (Workbox) |
+| カテゴリ | 技術 | バージョン |
+|---------|------|-----------|
+| フロントエンド | Next.js (App Router) | 16.0.5 |
+| UI Framework | React | 19.2.0 |
+| 言語 | TypeScript | 5.x |
+| スタイリング | Tailwind CSS | 4.x |
+| 状態管理 | Zustand | 5.0.8 |
+| データベース | Firebase Firestore | 12.6.0 |
+| 認証 | Firebase Auth（匿名認証対応） | 12.6.0 |
+| Push通知 | Firebase Cloud Messaging (FCM) | 12.6.0 |
+| AI/LLM | Gemini 2.0 Flash API | - |
+| ホスティング | Vercel（Cron Jobs活用） | - |
+| PWA | @ducanh2912/next-pwa (Workbox) | 10.2.9 |
 
 ---
 
@@ -43,134 +45,133 @@ swan/
 │   │   └── apple-touch-icon.png
 │   ├── splash/             # iOSスプラッシュスクリーン
 │   └── manifest.json       # PWAマニフェスト
-├── src/
-│   ├── app/                # Next.js App Router
-│   │   ├── (auth)/         # 認証関連ルート
-│   │   │   ├── login/
-│   │   │   │   └── page.tsx
-│   │   │   └── onboarding/
-│   │   │       └── page.tsx
-│   │   ├── (main)/         # メインアプリルート
-│   │   │   ├── page.tsx    # ダッシュボード（ホーム）
-│   │   │   ├── history/
-│   │   │   │   └── page.tsx
-│   │   │   ├── settings/
-│   │   │   │   └── page.tsx
-│   │   │   └── layout.tsx
-│   │   ├── sos/            # SOSフロー（フルスクリーン）
-│   │   │   ├── page.tsx    # 戦略選択
-│   │   │   ├── timer/
-│   │   │   │   └── page.tsx
-│   │   │   ├── breathing/
-│   │   │   │   └── page.tsx
-│   │   │   └── result/
-│   │   │       └── page.tsx
-│   │   ├── api/            # API Routes
-│   │   │   ├── smoke-records/
-│   │   │   │   └── route.ts
-│   │   │   ├── coping-records/
-│   │   │   │   └── route.ts
-│   │   │   ├── statistics/
-│   │   │   │   └── route.ts
-│   │   │   ├── push/
-│   │   │   │   ├── subscribe/
-│   │   │   │   │   └── route.ts
-│   │   │   │   └── send/
-│   │   │   │       └── route.ts
-│   │   │   ├── ai/
-│   │   │   │   ├── encouragement/
-│   │   │   │   │   └── route.ts
-│   │   │   │   └── coaching/
-│   │   │   │       └── route.ts
-│   │   │   └── cron/
-│   │   │       ├── morning-briefing/
-│   │   │       │   └── route.ts
-│   │   │       └── craving-alert/
-│   │   │           └── route.ts
-│   │   ├── layout.tsx      # ルートレイアウト
-│   │   ├── globals.css     # グローバルスタイル
-│   │   └── providers.tsx   # Context Providers
-│   ├── components/
-│   │   ├── ui/             # 基本UIコンポーネント
-│   │   │   ├── Button.tsx
-│   │   │   ├── Card.tsx
-│   │   │   ├── Modal.tsx
-│   │   │   ├── ProgressRing.tsx
-│   │   │   ├── Toast.tsx
-│   │   │   └── index.ts
-│   │   ├── dashboard/      # ダッシュボード関連
-│   │   │   ├── GoalHeader.tsx
-│   │   │   ├── ActionButtons.tsx
-│   │   │   ├── AchievementPanel.tsx
-│   │   │   ├── RandomTips.tsx
-│   │   │   └── CounterDisplay.tsx
-│   │   ├── sos/            # SOS関連
-│   │   │   ├── TimerScreen.tsx
-│   │   │   ├── BreathingAnimation.tsx
-│   │   │   ├── EncouragementMessage.tsx
-│   │   │   └── StrategySelector.tsx
-│   │   ├── records/        # 記録関連
-│   │   │   ├── TagSelector.tsx
-│   │   │   ├── RecordConfirmation.tsx
-│   │   │   └── HistoryList.tsx
-│   │   ├── settings/       # 設定関連
-│   │   │   ├── NotificationSettings.tsx
-│   │   │   ├── GoalSettings.tsx
-│   │   │   └── ProfileSettings.tsx
-│   │   ├── pwa/            # PWA関連
-│   │   │   ├── IOSInstallPrompt.tsx
-│   │   │   ├── UpdatePrompt.tsx
-│   │   │   ├── OfflineIndicator.tsx
-│   │   │   └── PushPermissionPrompt.tsx
-│   │   ├── animations/     # アニメーション
-│   │   │   ├── Celebration.tsx
-│   │   │   └── Confetti.tsx
-│   │   └── layout/         # レイアウト
-│   │       ├── Header.tsx
-│   │       ├── BottomNav.tsx
-│   │       └── SafeArea.tsx
-│   ├── hooks/              # カスタムフック
-│   │   ├── useSmokeRecord.ts
-│   │   ├── useCopingRecord.ts
-│   │   ├── useGoal.ts
-│   │   ├── useStatistics.ts
-│   │   ├── usePushPermission.ts
-│   │   ├── useIOSInstallPrompt.ts
-│   │   ├── useOnlineStatus.ts
-│   │   └── useServiceWorker.ts
-│   ├── lib/                # ユーティリティ・サービス
-│   │   ├── firebase/
-│   │   │   ├── config.ts
-│   │   │   ├── auth.ts
-│   │   │   └── firestore.ts
-│   │   ├── db/             # IndexedDB（オフライン用）
-│   │   │   ├── schema.ts
-│   │   │   ├── smokeRecordRepository.ts
-│   │   │   └── syncQueue.ts
+├── app/                    # Next.js App Router (no src/ directory)
+│   ├── (auth)/             # 認証関連ルート
+│   │   ├── login/
+│   │   │   └── page.tsx
+│   │   └── onboarding/
+│   │       └── page.tsx
+│   ├── (main)/             # メインアプリルート
+│   │   ├── page.tsx        # ダッシュボード（ホーム）
+│   │   ├── history/
+│   │   │   └── page.tsx
+│   │   ├── settings/
+│   │   │   └── page.tsx
+│   │   └── layout.tsx
+│   ├── sos/                # SOSフロー（フルスクリーン）
+│   │   ├── page.tsx        # 戦略選択
+│   │   ├── timer/
+│   │   │   └── page.tsx
+│   │   ├── breathing/
+│   │   │   └── page.tsx
+│   │   └── result/
+│   │       └── page.tsx
+│   ├── api/                # API Routes
+│   │   ├── smoke-records/
+│   │   │   └── route.ts
+│   │   ├── coping-records/
+│   │   │   └── route.ts
+│   │   ├── statistics/
+│   │   │   └── route.ts
 │   │   ├── push/
-│   │   │   ├── config.ts
-│   │   │   └── client.ts
+│   │   │   ├── subscribe/
+│   │   │   │   └── route.ts
+│   │   │   └── send/
+│   │   │       └── route.ts
 │   │   ├── ai/
-│   │   │   ├── gemini.ts
-│   │   │   └── prompts.ts
-│   │   └── utils/
-│   │       ├── date.ts
-│   │       ├── format.ts
-│   │       └── calculation.ts
-│   ├── store/              # Zustand ストア
-│   │   ├── useUserStore.ts
-│   │   ├── useRecordStore.ts
-│   │   └── useSettingsStore.ts
-│   ├── types/              # TypeScript型定義
-│   │   ├── smoke-record.ts
-│   │   ├── coping-record.ts
-│   │   ├── user.ts
-│   │   ├── notification.ts
-│   │   └── api.ts
-│   └── constants/          # 定数
-│       ├── tags.ts
-│       ├── tips.ts
-│       └── encouragement.ts
+│   │   │   ├── encouragement/
+│   │   │   │   └── route.ts
+│   │   │   └── coaching/
+│   │   │       └── route.ts
+│   │   └── cron/
+│   │       ├── morning-briefing/
+│   │       │   └── route.ts
+│   │       └── craving-alert/
+│   │           └── route.ts
+│   ├── layout.tsx          # ルートレイアウト
+│   ├── globals.css         # グローバルスタイル
+│   └── providers.tsx       # Context Providers
+├── components/             # Reactコンポーネント
+│   ├── ui/                 # 基本UIコンポーネント
+│   │   ├── Button.tsx
+│   │   ├── Card.tsx
+│   │   ├── Modal.tsx
+│   │   ├── ProgressRing.tsx
+│   │   ├── Toast.tsx
+│   │   └── index.ts
+│   ├── dashboard/          # ダッシュボード関連
+│   │   ├── GoalHeader.tsx
+│   │   ├── ActionButtons.tsx
+│   │   ├── AchievementPanel.tsx
+│   │   ├── RandomTips.tsx
+│   │   └── CounterDisplay.tsx
+│   ├── sos/                # SOS関連
+│   │   ├── TimerScreen.tsx
+│   │   ├── BreathingAnimation.tsx
+│   │   ├── EncouragementMessage.tsx
+│   │   └── StrategySelector.tsx
+│   ├── records/            # 記録関連
+│   │   ├── TagSelector.tsx
+│   │   ├── RecordConfirmation.tsx
+│   │   └── HistoryList.tsx
+│   ├── settings/           # 設定関連
+│   │   ├── NotificationSettings.tsx
+│   │   ├── GoalSettings.tsx
+│   │   └── ProfileSettings.tsx
+│   ├── pwa/                # PWA関連
+│   │   ├── IOSInstallPrompt.tsx
+│   │   ├── UpdatePrompt.tsx
+│   │   ├── OfflineIndicator.tsx
+│   │   └── PushPermissionPrompt.tsx
+│   ├── animations/         # アニメーション
+│   │   ├── Celebration.tsx
+│   │   └── Confetti.tsx
+│   └── layout/             # レイアウト
+│       ├── Header.tsx
+│       ├── BottomNav.tsx
+│       └── SafeArea.tsx
+├── hooks/                  # カスタムフック
+│   ├── useSmokeRecord.ts
+│   ├── useCopingRecord.ts
+│   ├── useGoal.ts
+│   ├── useStatistics.ts
+│   ├── usePushPermission.ts
+│   ├── useIOSInstallPrompt.ts
+│   ├── useOnlineStatus.ts
+│   └── useServiceWorker.ts
+├── lib/                    # ユーティリティ・サービス
+│   ├── firebase/
+│   │   ├── config.ts
+│   │   ├── auth.ts
+│   │   └── firestore.ts
+│   ├── indexeddb/          # IndexedDB（オフライン用）
+│   │   ├── schema.ts
+│   │   ├── smokeRecordRepository.ts
+│   │   └── syncQueue.ts
+│   ├── push/
+│   │   ├── config.ts
+│   │   └── client.ts
+│   ├── ai/
+│   │   ├── gemini.ts
+│   │   └── prompts.ts
+│   └── utils/
+│       ├── date.ts
+│       ├── format.ts
+│       └── calculation.ts
+├── store/                  # Zustand ストア
+│   ├── useUserStore.ts
+│   ├── useRecordStore.ts
+│   └── useSettingsStore.ts
+├── types/                  # TypeScript型定義
+│   ├── smoke-record.ts
+│   ├── coping-record.ts
+│   ├── user.ts
+│   ├── notification.ts
+│   └── api.ts
+├── constants/              # 定数
+│   ├── tags.ts
+│   ├── tips.ts
+│   └── encouragement.ts
 ├── tests/
 │   ├── unit/
 │   ├── integration/
