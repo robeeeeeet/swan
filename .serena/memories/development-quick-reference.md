@@ -370,8 +370,20 @@ npm run build 2>&1 | tee build.log
   - 本数推移チャート
   - 日別カード一覧
   - 詳細モーダル（タグ分析、ヒートマップ、タイムライン）
-- [ ] 設定ページ（目標設定、通知設定）
-- [ ] AI励ましメッセージ統合（Gemini 2.0 Flash）
+
+### Week 5 ✅ 設定ページ完了（2025-11-30）
+- [x] Switch UIコンポーネント ✅
+- [x] 設定ページ（目標設定、通知設定、コスト設定、アカウント管理） ✅
+  - GoalSection.tsx（目標設定）
+  - CostSection.tsx（コスト設定）
+  - NotificationSection.tsx（通知設定）
+  - AccountSection.tsx（アカウント管理）
+  - リアルタイム保存機能
+  - 保存確認メッセージ
+
+**Phase 1 完全完了！** 🎉
+
+次のステップ: Phase 2（成果可視化パネル、PWA設定、iOSインストールガイド）
 
 ## 参考リンク
 

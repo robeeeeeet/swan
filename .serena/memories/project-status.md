@@ -51,6 +51,7 @@
 - **components/ui/Card.tsx** - Card, CardHeader, CardContent, CardFooter
 - **components/ui/Modal.tsx** - Portal、フォーカストラップ、iOS Safe Area対応
 - **components/ui/Celebration.tsx** - 祝福アニメーション（我慢成功時等に使用）
+- **components/ui/Switch.tsx** - トグルスイッチコンポーネント（アクセシビリティ対応、44px最小タッチターゲット） ✅ NEW! (2025-11-30)
 
 #### 7. ダッシュボード専用コンポーネント
 - **components/dashboard/RecordButton.tsx** - 3種類の記録ボタン
@@ -99,7 +100,8 @@ swan/
 │   │   ├── Button.tsx           ✅
 │   │   ├── Card.tsx             ✅
 │   │   ├── Modal.tsx            ✅
-│   │   └── Celebration.tsx      ✅
+│   │   ├── Celebration.tsx      ✅
+│   │   └── Switch.tsx           ✅
 │   ├── dashboard/
 │   │   ├── RecordButton.tsx     ✅
 │   │   ├── GoalHeader.tsx       ✅
@@ -108,11 +110,16 @@ swan/
 │   │   ├── Timer.tsx            ✅ 3分タイマーコンポーネント
 │   │   ├── BreathingCircle.tsx  ✅ 深呼吸ガイドコンポーネント
 │   │   └── SOSModal.tsx         ✅ SOSモーダル
-│   └── history/                 ✅ NEW! (2025-11-30)
-│       ├── HistoryCard.tsx      ✅ 日別サマリーカード
-│       ├── WeekStats.tsx        ✅ 週間統計カード
-│       ├── SimpleBarChart.tsx   ✅ 本数推移チャート
-│       └── DayDetailModal.tsx   ✅ 日別詳細モーダル
+│   ├── history/                 ✅ NEW! (2025-11-30)
+│   │   ├── HistoryCard.tsx      ✅ 日別サマリーカード
+│   │   ├── WeekStats.tsx        ✅ 週間統計カード
+│   │   ├── SimpleBarChart.tsx   ✅ 本数推移チャート
+│   │   └── DayDetailModal.tsx   ✅ 日別詳細モーダル
+│   └── settings/                ✅ NEW! (2025-11-30)
+│       ├── GoalSection.tsx      ✅ 目標設定セクション
+│       ├── CostSection.tsx      ✅ コスト設定セクション
+│       ├── NotificationSection.tsx ✅ 通知設定セクション
+│       └── AccountSection.tsx   ✅ アカウント管理セクション
 ├── hooks/
 │   ├── useAuth.ts               ✅
 │   ├── useRecords.ts            ✅
@@ -305,6 +312,13 @@ swan/
   - 本数推移チャート（直近7日間）
   - 日別記録カード一覧
   - 詳細モーダル表示
+- **app/(main)/settings/page.tsx** - 設定ページ ✅ NEW! (2025-11-30)
+  - 目標設定（日次目標本数、自動ステップダウン）
+  - コスト設定（タバコ価格、1箱の本数、1本あたり価格計算）
+  - 通知設定（マスタースイッチ、4種類の通知、プライバシーモード、サイレント時間）
+  - アカウント管理（アカウント種別表示、Googleアカウント連携、サインアウト）
+  - リアルタイム保存（IndexedDB + Firestore同期）
+  - 保存確認メッセージ表示
 - **components/history/HistoryCard.tsx** - 日別サマリーカード ✅
   - 日付ヘッダー（和暦形式: 11月30日(日)）
   - 「今日」バッジ
@@ -339,14 +353,13 @@ swan/
   - `formatDate(dateStr)` - 和暦日付フォーマット（例: 11月30日(日)）
   - `formatTime(timestampStr)` - 時刻フォーマット（例: 14:30）
 
-### 🚧 未実装機能（Phase 1 残タスク）
+### ✅ Phase 1 完全完了（2025-11-30）
 
-#### 中優先度
-1. **設定ページ**
-   - `app/(main)/settings/page.tsx`
-   - 目標設定
-   - 通知設定
-   - アカウント管理
+Phase 1のすべての機能が実装完了しました：
+- ✅ データ永続化層（IndexedDB + Firestore）
+- ✅ SOS機能（3分タイマー・深呼吸モード）
+- ✅ 履歴ページ（期間フィルター・統計・チャート・詳細モーダル）
+- ✅ 設定ページ（目標設定・通知設定・コスト設定・アカウント管理）
 
 ### 📋 Phase 2 以降のタスク
 

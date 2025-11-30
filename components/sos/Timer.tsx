@@ -166,7 +166,7 @@ export const Timer: FC<TimerProps> = ({
             size="lg"
             fullWidth
             onClick={handleStart}
-            ariaLabel="タイマーを開始"
+            aria-label="タイマーを開始"
           >
             開始
           </Button>
@@ -179,7 +179,7 @@ export const Timer: FC<TimerProps> = ({
               size="lg"
               fullWidth
               onClick={handlePause}
-              ariaLabel="タイマーを一時停止"
+              aria-label="タイマーを一時停止"
             >
               一時停止
             </Button>
@@ -187,7 +187,7 @@ export const Timer: FC<TimerProps> = ({
               variant="ghost"
               size="lg"
               onClick={handleReset}
-              ariaLabel="タイマーをリセット"
+              aria-label="タイマーをリセット"
             >
               リセット
             </Button>
@@ -201,7 +201,7 @@ export const Timer: FC<TimerProps> = ({
               size="lg"
               fullWidth
               onClick={handleStart}
-              ariaLabel="タイマーを再開"
+              aria-label="タイマーを再開"
             >
               再開
             </Button>
@@ -209,7 +209,7 @@ export const Timer: FC<TimerProps> = ({
               variant="ghost"
               size="lg"
               onClick={handleReset}
-              ariaLabel="タイマーをリセット"
+              aria-label="タイマーをリセット"
             >
               リセット
             </Button>
@@ -222,7 +222,7 @@ export const Timer: FC<TimerProps> = ({
             size="lg"
             fullWidth
             onClick={handleReset}
-            ariaLabel="タイマーをもう一度"
+            aria-label="タイマーをもう一度"
           >
             もう一度
           </Button>

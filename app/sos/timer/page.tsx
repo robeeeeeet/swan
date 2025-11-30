@@ -34,7 +34,7 @@ const TimerPage: FC = () => {
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            ariaLabel="戻る"
+            aria-label="戻る"
           >
             ← 戻る
           </Button>
@@ -98,7 +98,7 @@ const TimerPage: FC = () => {
               variant="primary"
               fullWidth
               onClick={() => router.push('/sos/breathing')}
-              ariaLabel="深呼吸モードへ"
+              aria-label="深呼吸モードへ"
             >
               深呼吸モードへ
             </Button>

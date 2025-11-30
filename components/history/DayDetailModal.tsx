@@ -1,5 +1,5 @@
 import { FC, useMemo } from 'react';
-import { DailySummary, SmokingRecord } from '@/types';
+import { DailySummary, SmokingRecord, SituationTag } from '@/types';
 import { formatDate, formatTime } from '@/lib/utils/summary';
 import { SITUATION_TAGS } from '@/constants/tags';
 
@@ -38,8 +38,9 @@ export const DayDetailModal: FC<DayDetailModalProps> = ({
 
     const tagArray = Array.from(counts.entries())
       .map(([tagId, count]) => {
-        const tag = SITUATION_TAGS[tagId as SituationTag];
-        return tag ? { id: tagId, ...tag, count } : null;
+        const situationTag = tagId as SituationTag;
+        const tag = SITUATION_TAGS[situationTag];
+        return tag ? { id: situationTag, ...tag, count } : null;
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
       .sort((a, b) => b.count - a.count);

@@ -201,7 +201,7 @@ export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete }) => {
             size="lg"
             fullWidth
             onClick={handleStart}
-            ariaLabel="深呼吸を開始"
+            aria-label="深呼吸を開始"
           >
             開始
           </Button>
@@ -213,7 +213,7 @@ export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete }) => {
             size="lg"
             fullWidth
             onClick={handleStop}
-            ariaLabel="深呼吸を終了"
+            aria-label="深呼吸を終了"
           >
             終了
           </Button>
@@ -225,7 +225,7 @@ export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete }) => {
             size="lg"
             fullWidth
             onClick={handleStart}
-            ariaLabel="もう一度深呼吸"
+            aria-label="もう一度深呼吸"
           >
             もう一度
           </Button>

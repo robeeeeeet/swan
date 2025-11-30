@@ -26,7 +26,7 @@ const BreathingPage: FC = () => {
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            ariaLabel="戻る"
+            aria-label="戻る"
           >
             ← 戻る
           </Button>
@@ -94,7 +94,7 @@ const BreathingPage: FC = () => {
               variant="secondary"
               fullWidth
               onClick={() => router.push('/sos/timer')}
-              ariaLabel="3分タイマーへ"
+              aria-label="3分タイマーへ"
             >
               3分タイマーへ
             </Button>
