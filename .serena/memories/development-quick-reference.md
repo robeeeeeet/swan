@@ -460,6 +460,74 @@ const startTimestamp = getTime(startDate);
 format(new Date(), 'M月d日(E)', { locale: ja }); // "12月1日(日)"
 ```
 
+## Tipsシステム（NEW! 2025-12-01）
+
+### 30種類のカテゴリー別Tips
+禁煙対策Tipsは `constants/tips.ts` に定義されています。
+
+#### カテゴリー一覧
+| カテゴリー | 絵文字 | 件数 | 例 |
+|-----------|--------|------|-----|
+| 感覚刺激 | 💧 | 6件 | 冷水を飲む、顔を洗う |
+| 呼吸法 | 🌬️ | 1件 | 深呼吸（15秒法） |
+| 代替行動 | 🎯 | 9件 | ガム、ストロー、ゲーム |
+| 心理・認知 | 🧠 | 5件 | タイマー、衝動サーフィン |
+| 運動 | 🏃 | 2件 | ストレッチ、スクワット |
+| 環境調整 | 🏠 | 3件 | 場所を変える、掃除 |
+| 食事・栄養 | 🥗 | 2件 | ビタミンC、ハーブティー |
+| コミュニケーション | 💬 | 1件 | サポーターに連絡 |
+| 急速休息 | 😴 | 1件 | パワーナップ |
+
+#### 基本的な使い方
+```typescript
+import { getRandomTip, getTipsByCategory, TIPS } from '@/constants/tips';
+
+// ランダムなTipを取得
+const tip = getRandomTip();
+console.log(tip.action);      // "冷水を飲む"
+console.log(tip.description); // "冷たい水が喉を通る..."
+console.log(tip.category);    // "感覚刺激"
+
+// カテゴリー別に取得
+const stressTips = getTipsByCategory('心理・認知');
+
+// 全Tips参照
+console.log(TIPS.length); // 30
+```
+
+#### RandomTipコンポーネント使用例
+```tsx
+import RandomTip from '@/components/dashboard/RandomTip';
+
+function Dashboard() {
+  return (
+    <div>
+      {/* 5分ごとに自動更新、カテゴリーバッジ付き表示 */}
+      <RandomTip />
+    </div>
+  );
+}
+```
+
+#### 将来の拡張: 状況に応じたTips提案
+```typescript
+// SOS機能で活用予定
+import { getTipsByCategory } from '@/constants/tips';
+
+function getSuggestedTips(situationTags: string[]) {
+  const categoryMap: Record<string, string[]> = {
+    'stress': ['心理・認知', '呼吸法'],
+    'after_meal': ['代替行動', '感覚刺激'],
+    'bored': ['代替行動', '運動'],
+  };
+
+  const categories = situationTags.flatMap(tag => categoryMap[tag] || []);
+  return [...new Set(categories)].flatMap(cat => 
+    getTipsByCategory(cat as TipCategory)
+  );
+}
+```
+
 ## 参考リンク
 
 - [Next.js 16 Documentation](https://nextjs.org/docs)

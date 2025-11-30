@@ -150,7 +150,8 @@ swan/
 │   └── index.ts                 ✅
 ├── constants/
 │   ├── tags.ts                  ✅
-│   └── messages.ts              ✅
+│   ├── messages.ts              ✅
+│   └── tips.ts                  ✅ NEW! (2025-12-01) 30種類カテゴリー別Tips
 ├── public/
 │   └── manifest.json            ✅
 ├── docs/
@@ -425,6 +426,27 @@ Phase 1のすべての機能が実装完了しました：
 #### モーダル修正
 - **ボタン視認性**: ghost→outlineに変更（枠線追加）
 - **ローディング**: 記録送信中のローディング表示追加
+
+### ✅ Tips システム刷新（2025-12-01 NEW!）
+
+#### 16. 禁煙対策Tips（30種類カテゴリー別）
+- **constants/tips.ts** - Tips定義ファイル ✅
+  - 30種類のカテゴリー別Tips（CSVから変換）
+  - 9カテゴリー: 感覚刺激、呼吸法、代替行動、心理・認知、運動、環境調整、食事・栄養、コミュニケーション、急速休息
+  - 型定義: `TipCategory`, `Tip`
+  - ヘルパー関数: `getRandomTip()`, `getTipsByCategory()`, `getAllCategories()`
+- **components/dashboard/RandomTip.tsx** - 更新 ✅
+  - カテゴリーバッジ表示（絵文字付き）
+  - アクション + 説明の2段表示
+  - SSR対応（初期値固定、クライアントでランダム化）
+- **constants/messages.ts** - 古いRANDOM_TIPS削除 ✅
+
+#### 将来の拡張ポイント
+- **カテゴリーフィルタリング**: SOS機能で「今の状況に合ったTips」を提案
+  - ストレス時 → 「心理・認知」「呼吸法」を優先
+  - 食後 → 「代替行動」「感覚刺激」を優先
+- **お気に入り機能**: ユーザーが有効だったTipsをブックマーク
+- **学習機能**: ユーザーの状況タグとTipsの効果を関連付け、パーソナライズ
 
 ### 📋 Phase 2 以降のタスク
 

@@ -25,22 +25,6 @@ export const NEUTRAL_MESSAGES = [
 ];
 
 /**
- * Random tips for dashboard
- */
-export const RANDOM_TIPS = [
-  '深呼吸を3回すると、吸いたい気持ちが和らぎます',
-  '水を一杯飲むと、口寂しさが紛れます',
-  '3分待つと、衝動の多くは自然に消えます',
-  '散歩に出ると、気分転換になります',
-  '友達や家族に話すと、サポートを得られます',
-  'ガムやアメを口に入れると、手持ち無沙汰が解消されます',
-  '過去の成功体験を思い出してみましょう',
-  '禁煙の理由を再確認してみましょう',
-  '今の気持ちを日記に書いてみましょう',
-  '好きな音楽を聴いてリラックスしましょう',
-];
-
-/**
  * Morning briefing fallback messages
  */
 export const MORNING_BRIEFINGS = [

@@ -374,6 +374,90 @@ export default function SOSLayout({ children }) {
 2. **コード重複許容**: (main)とsosで同じ認証ロジックを持つが、将来的に異なる要件が出る可能性を考慮
 3. **ローディングUI**: 一貫したローディング体験を提供
 
+## Tipsシステム設計（2025-12-01 NEW!）
+
+### CSV → TypeScript変換の決定
+ユーザーから提供されたCSV形式のTipsデータを、TypeScriptの型安全な配列に変換して管理。
+
+#### 選択肢の検討
+| 方法 | メリット | デメリット |
+|------|---------|-----------|
+| **constants/tips.ts に直接定義** ✅採用 | 型安全、コンパイル時エラー検出、Tree-shaking可能 | CSVと二重管理が必要 |
+| public/data/tips.csv | 非エンジニアでも編集可能 | ランタイムfetch必要、型安全性低 |
+| ビルド時変換 | 最新CSVを常に反映 | 複雑なビルドパイプライン必要 |
+
+#### 採用理由
+1. **型安全性**: `TipCategory`のunion型でカテゴリーの誤りをコンパイル時に検出
+2. **パフォーマンス**: fetchなしで即座にアクセス可能
+3. **拡張性**: `getTipsByCategory()`などのヘルパー関数で柔軟な検索
+4. **バンドル最適化**: 使用しないカテゴリーのTipsはTree-shakingで除外可能
+
+### カテゴリー設計
+9つのカテゴリーに分類（CSVの「カテゴリー」列をそのまま採用）:
+
+```typescript
+export type TipCategory =
+  | '感覚刺激'      // 水、歯磨き、氷など
+  | '呼吸法'        // 深呼吸
+  | '代替行動'      // ガム、ゲーム、ツボ押しなど
+  | '心理・認知'    // タイマー、衝動サーフィンなど
+  | '運動'          // ストレッチ、スクワット
+  | '環境調整'      // 場所移動、掃除
+  | '食事・栄養'    // ビタミンC、ハーブティー
+  | 'コミュニケーション' // サポーターへ連絡
+  | '急速休息';     // パワーナップ
+```
+
+### 将来の拡張ポイント
+
+#### 1. カテゴリーベースの推薦システム
+状況タグ（SituationTag）とTipsカテゴリーのマッピング:
+
+```typescript
+const TAG_TO_CATEGORY: Record<SituationTag, TipCategory[]> = {
+  'stress': ['心理・認知', '呼吸法', '運動'],
+  'after_meal': ['代替行動', '感覚刺激'],
+  'break': ['運動', '環境調整'],
+  'with_alcohol': ['代替行動', '心理・認知'],
+  'bored': ['代替行動', '運動', 'コミュニケーション'],
+  // ...
+};
+```
+
+SOS機能で「吸いたい」を押した時、選択されたタグに基づいて最適なTipsを提案可能。
+
+#### 2. お気に入り・効果記録機能
+```typescript
+interface TipFeedback {
+  tipId: number;
+  userId: string;
+  wasHelpful: boolean;
+  usedAt: number; // timestamp
+}
+```
+
+ユーザーが「このTipsが役に立った」とマークできる機能。データを蓄積してパーソナライズ。
+
+#### 3. AI統合（Phase 3）
+Gemini APIを使って、ユーザーの状況・履歴に基づいたTips選択:
+
+```typescript
+// 将来的なAPI例
+async function getAISuggestedTip(context: UserContext): Promise<Tip> {
+  const prompt = `
+    ユーザーの状況: ${context.tags.join(', ')}
+    最近効果があったTips: ${context.recentEffectiveTips.join(', ')}
+    以下のTipsから最適なものを1つ選んでください...
+  `;
+  // Gemini API呼び出し
+}
+```
+
+#### 4. Tips効果のA/Bテスト
+どのカテゴリーのTipsが最も効果的か統計分析:
+- 表示後に「我慢できた」が押された率
+- カテゴリー別の抵抗成功率
+
 ## セキュリティ考慮事項
 
 ### 環境変数管理
