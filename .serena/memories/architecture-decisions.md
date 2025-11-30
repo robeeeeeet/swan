@@ -276,6 +276,74 @@ lib/indexeddb/index.ts (オフラインファースト)
 3. **コード分割**: 動的インポートで初期バンドルサイズ削減
 4. **Service Worker キャッシュ**: 静的アセットを積極的にキャッシュ
 
+## タイムゾーン対応（2025-12-01 NEW!）
+
+### 問題: UTCとローカル時刻の混在
+JavaScriptの`toISOString()`はUTC時刻を返すため、日本（JST = UTC+9）では問題が発生：
+- 午前0時～8時59分（JST）に記録すると、UTCでは前日の日付になる
+- 例: 2024年1月1日 01:00 JST → 2023年12月31日 16:00 UTC
+
+### 解決策: lib/utils/date.ts
+すべての日付操作にローカルタイムゾーン対応の関数を使用：
+
+```typescript
+// ✅ 正しいアプローチ
+export function getLocalDateString(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+```
+
+### 影響範囲
+以下のファイルを更新：
+- `hooks/useRecords.ts` - getTodayDate関数
+- `hooks/useHistory.ts` - 日付フィルタリング
+- `app/(main)/history/page.tsx` - チャートデータ生成
+- `components/history/SimpleBarChart.tsx` - 今日判定
+- `components/history/HistoryCard.tsx` - 今日判定
+
+### 設計判断
+1. **専用ユーティリティ**: 日付操作を一元管理
+2. **ライブラリ不使用**: dayjs等を使わず軽量に実装
+3. **後方互換性**: 既存のYYYY-MM-DD形式を維持
+
+## SOS認証ガード（2025-12-01 NEW!）
+
+### 問題: 認証なしでSOS機能にアクセス可能
+`/sos/timer`や`/sos/breathing`は`(main)`ルートグループの外にあり、認証ガードが適用されていなかった。
+
+### 解決策: app/sos/layout.tsx
+`(main)/layout.tsx`と同じ認証ロジックを持つレイアウトを作成：
+
+```typescript
+// app/sos/layout.tsx
+'use client';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+
+export default function SOSLayout({ children }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/signin');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  if (isLoading) return <LoadingSpinner />;
+  if (!isAuthenticated) return null;
+  return <>{children}</>;
+}
+```
+
+### 設計判断
+1. **レイアウトベース**: ルートグループを変更せず、レイアウトで認証を管理
+2. **コード重複許容**: (main)とsosで同じ認証ロジックを持つが、将来的に異なる要件が出る可能性を考慮
+3. **ローディングUI**: 一貫したローディング体験を提供
+
 ## セキュリティ考慮事項
 
 ### 環境変数管理

@@ -415,6 +415,39 @@ npm run build 2>&1 | tee build.log
 
 次のステップ: Phase 2（PWA設定、iOSインストールガイド）
 
+## タイムゾーン対応日付ユーティリティ（NEW! 2025-12-01）
+
+### 問題: UTC vs ローカル時刻
+```typescript
+// ❌ 間違い: UTCで日付を取得（0時～8:59 JSTで前日になる）
+const date = new Date().toISOString().split('T')[0];
+
+// ✅ 正解: ローカル時刻で日付を取得
+import { getLocalDateString } from '@/lib/utils/date';
+const date = getLocalDateString(); // "2025-12-01"
+```
+
+### 利用可能な関数
+```typescript
+import {
+  getLocalDateString,    // YYYY-MM-DD形式（ローカル）
+  getLocalMidnight,      // 深夜0時のDateオブジェクト
+  parseLocalDateString,  // "2025-12-01" → Date
+  getJapaneseDayLabel,   // Date → "月", "火", etc.
+  getChartDateLabel,     // Date → "1(月)"
+} from '@/lib/utils/date';
+
+// 今日の日付を取得
+const today = getLocalDateString(); // "2025-12-01"
+
+// 7日前からのデータを取得
+const startDate = getLocalMidnight();
+startDate.setDate(startDate.getDate() - 7);
+
+// チャート用ラベル生成
+const label = getChartDateLabel(new Date()); // "1(日)"
+```
+
 ## 参考リンク
 
 - [Next.js 16 Documentation](https://nextjs.org/docs)

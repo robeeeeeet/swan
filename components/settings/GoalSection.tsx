@@ -1,6 +1,6 @@
 'use client';
 
-import { FC } from 'react';
+import { FC, useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { GoalSettings } from '@/types';
 
@@ -9,6 +9,8 @@ interface GoalSectionProps {
   onUpdate: (goals: Partial<GoalSettings>) => void;
 }
 
+const MAX_DAILY_TARGET = 50; // 現実的な上限
+
 /**
  * 目標設定セクション
  *
@@ -16,6 +18,30 @@ interface GoalSectionProps {
  * - 自動ステップダウン設定
  */
 export const GoalSection: FC<GoalSectionProps> = ({ goals, onUpdate }) => {
+  // ローカル状態で入力値を管理
+  const [inputValue, setInputValue] = useState(goals.dailyTarget.toString());
+
+  // 親からの値が変わったら同期
+  useEffect(() => {
+    setInputValue(goals.dailyTarget.toString());
+  }, [goals.dailyTarget]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // 数字のみ許可（空文字列も許可）
+    if (value === '' || /^\d+$/.test(value)) {
+      setInputValue(value);
+    }
+  };
+
+  const handleBlur = () => {
+    // フォーカスが外れたときに値を確定
+    const numValue = parseInt(inputValue) || 0;
+    const clampedValue = Math.min(numValue, MAX_DAILY_TARGET);
+    setInputValue(clampedValue.toString());
+    onUpdate({ dailyTarget: clampedValue });
+  };
+
   return (
     <Card>
       <CardContent className="space-y-4">
@@ -39,15 +65,14 @@ export const GoalSection: FC<GoalSectionProps> = ({ goals, onUpdate }) => {
           <div className="flex items-center gap-3">
             <input
               id="dailyTarget"
-              type="number"
-              min="0"
-              max="100"
-              value={goals.dailyTarget}
-              onChange={(e) =>
-                onUpdate({ dailyTarget: parseInt(e.target.value) || 0 })
-              }
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={inputValue}
+              onChange={handleChange}
+              onBlur={handleBlur}
               className="
-                flex-1 px-4 py-3 text-lg font-semibold
+                flex-1 px-4 py-3 text-lg font-semibold text-center
                 bg-white dark:bg-slate-700
                 border-2 border-gray-300 dark:border-slate-600
                 rounded-xl
@@ -59,7 +84,7 @@ export const GoalSection: FC<GoalSectionProps> = ({ goals, onUpdate }) => {
             <span className="text-gray-600 dark:text-gray-400 font-medium">本</span>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            現在の喫煙本数より少し少なめに設定するのがおすすめです
+            0〜{MAX_DAILY_TARGET}本まで設定可能。現在の喫煙本数より少し少なめに設定するのがおすすめです
           </p>
         </div>
 

@@ -87,6 +87,7 @@ swan/
 │   │   └── dashboard/
 │   │       └── page.tsx          ✅ ダッシュボード
 │   ├── sos/                      ✅ SOS機能実装完了
+│   │   ├── layout.tsx           ✅ NEW! (2025-12-01) SOS認証ガード
 │   │   ├── timer/
 │   │   │   └── page.tsx         ✅ 3分タイマーページ
 │   │   └── breathing/
@@ -137,7 +138,8 @@ swan/
 │   │   ├── sync.ts              ✅
 │   │   └── index.ts             ✅
 │   ├── utils/                   ✅ NEW!
-│   │   └── summary.ts           ✅
+│   │   ├── summary.ts           ✅
+│   │   └── date.ts              ✅ NEW! (2025-12-01) タイムゾーン対応日付ユーティリティ
 │   ├── ai/                      📁 (ディレクトリのみ)
 │   └── push/                    📁 (ディレクトリのみ)
 ├── store/
@@ -218,16 +220,16 @@ swan/
 
 1. **トップページ（/）**
    - 認証済み → `/dashboard` にリダイレクト
-   - 未認証 → `/auth/signin` にリダイレクト
+   - 未認証 → `/signin` にリダイレクト
 
-2. **サインインページ（/auth/signin）**
+2. **サインインページ（/signin）** ※ディレクトリは `app/(auth)/signin/` だがURLは `/signin`
    - 匿名ログイン
    - Googleログイン
    - エラーハンドリング
    - ログイン後 → `/dashboard` にリダイレクト
 
 3. **メインレイアウト認証ガード**
-   - 未認証時は `/auth/signin` にリダイレクト
+   - 未認証時は `/signin` にリダイレクト
    - ローディング状態表示
 
 ### ✅ Phase 1 完了項目（続き）
@@ -352,24 +354,72 @@ swan/
 - **lib/utils/summary.ts** - 追加関数 ✅
   - `formatDate(dateStr)` - 和暦日付フォーマット（例: 11月30日(日)）
   - `formatTime(timestampStr)` - 時刻フォーマット（例: 14:30）
+  - `calculateCumulativeStats(summaries)` - 累積統計計算（成果可視化用）
 
-### ✅ Phase 1 完全完了（2025-11-30）
+#### 15. 成果可視化パネル（B-03）（2025-11-30 NEW!）
+- **components/dashboard/AchievementPanel.tsx** - 成果パネルコンポーネント ✅
+  - 4指標グリッド表示（2x2レイアウト）
+  - 💰 節約金額 - `formatMoney()` でフォーマット
+  - ⏰ 取り戻した時間 - `formatLifeRegained()` で「◯時間◯分」形式
+  - 🏆 我慢成功回数 - 累積カウント
+  - 📅 記録継続日数 - ユニーク日数カウント
+  - 励ましメッセージ - 成功回数・節約金額に応じた動的メッセージ（7段階）
+  - グラデーション背景（Teal）、ホバーエフェクト
+- **hooks/useAchievements.ts** - 成果データ取得フック ✅
+  - IndexedDBからサマリー取得
+  - `calculateCumulativeStats()` で累積統計計算
+  - ローディング状態管理
+
+### ✅ Phase 1 + B-03 完全完了（2025-11-30）
 
 Phase 1のすべての機能が実装完了しました：
 - ✅ データ永続化層（IndexedDB + Firestore）
 - ✅ SOS機能（3分タイマー・深呼吸モード）
 - ✅ 履歴ページ（期間フィルター・統計・チャート・詳細モーダル）
 - ✅ 設定ページ（目標設定・通知設定・コスト設定・アカウント管理）
-- ✅ 成果可視化パネル（B-03）- 節約金額、取り戻した時間、我慢成功回数、記録継続日数（2025-11-30）
+- ✅ **成果可視化パネル（B-03）** - 節約金額、取り戻した時間、我慢成功回数、記録継続日数（2025-11-30）
+  - `components/dashboard/AchievementPanel.tsx` ✅
+  - `hooks/useAchievements.ts` ✅  
+  - 累積統計計算（`lib/utils/summary.ts` - `calculateCumulativeStats`）✅
+  - 4指標表示（💰節約金額、⏰取り戻した時間、🏆我慢成功回数、📅記録継続日数）
+  - 励ましメッセージ機能（成功回数・節約金額に応じた動的メッセージ）
+
+### ✅ Phase 1 バグ修正完了（2025-12-01 NEW!）
+
+ブラウザ検証で発見されたバグを修正：
+
+#### タイムゾーン修正
+- **問題**: `toISOString().split('T')[0]`がUTC日付を返し、0時～8時59分（JST）に記録すると前日の日付になる
+- **解決**: `lib/utils/date.ts`を新規作成、ローカルタイムゾーン対応
+  - `getLocalDateString()` - YYYY-MM-DD形式（ローカル）
+  - `getLocalMidnight()` - 深夜0時（ローカル）
+  - `getChartDateLabel()` - チャート用日付ラベル
+- **影響ファイル**: useRecords.ts, useHistory.ts, history/page.tsx, SimpleBarChart.tsx, HistoryCard.tsx
+
+#### SOS認証ガード追加
+- **問題**: `/sos/breathing`等に未認証でアクセス可能だった
+- **解決**: `app/sos/layout.tsx`を新規作成、(main)と同じ認証ロジック適用
+
+#### 設定ページ修正
+- **数値入力**: ローカルステート管理で「0が残る」問題を解決
+- **トグルスイッチ**: Switch.tsxのレイアウト修正（44px最小タッチターゲット）
+- **通知設定**: マスタースイッチOFF時は非表示→グレーアウト表示に変更
+
+#### SOSページ修正
+- **React setStateエラー**: Timer.tsxのonComplete呼び出しをuseEffectに移動
+- **ナビゲーション**: 戻るボタンでダッシュボードに遷移
+- **完了時UI**: 「もう一度」「ダッシュボードに戻る」の2ボタン表示
+
+#### モーダル修正
+- **ボタン視認性**: ghost→outlineに変更（枠線追加）
+- **ローディング**: 記録送信中のローディング表示追加
 
 ### 📋 Phase 2 以降のタスク
 
-#### Phase 2: ダッシュボード強化・PWA設定
+#### Phase 2: PWA設定（現在のフェーズ）
 - [ ] PWAアイコン作成（72x72～512x512）
-- [ ] iOSスプラッシュスクリーン
+- [ ] iOSスプラッシュスクリーン  
 - [ ] Service Worker設定（next-pwa）
-- [ ] オフライン対応強化
-- [x] 成果可視化パネル（B-03）✅ 完了（2025-11-30）
 - [ ] インストールガイド（E-02）
 
 #### Phase 3: Web Push通知・AI機能

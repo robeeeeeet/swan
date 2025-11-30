@@ -18,6 +18,10 @@ const BreathingPage: FC = () => {
     setShowCelebration(false);
   };
 
+  const handleBackToDashboard = () => {
+    router.push('/dashboard');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* ヘッダー */}
@@ -25,8 +29,8 @@ const BreathingPage: FC = () => {
         <div className="px-4 py-3 max-w-lg mx-auto flex items-center justify-between">
           <Button
             variant="ghost"
-            onClick={() => router.back()}
-            aria-label="戻る"
+            onClick={handleBackToDashboard}
+            aria-label="ダッシュボードに戻る"
           >
             ← 戻る
           </Button>
@@ -40,7 +44,7 @@ const BreathingPage: FC = () => {
       {/* メインコンテンツ */}
       <main className="px-4 py-8 max-w-lg mx-auto">
         {/* 深呼吸コンポーネント */}
-        <BreathingCircle onComplete={handleComplete} />
+        <BreathingCircle onComplete={handleComplete} onBackToDashboard={handleBackToDashboard} />
 
         {/* ガイド */}
         <div className="mt-12 space-y-4">

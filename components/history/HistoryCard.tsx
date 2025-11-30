@@ -1,7 +1,8 @@
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
 import { DailySummary, SituationTag } from '@/types';
 import { formatDate } from '@/lib/utils/summary';
 import { SITUATION_TAGS } from '@/constants/tags';
+import { getLocalDateString } from '@/lib/utils/date';
 
 interface HistoryCardProps {
   summary: DailySummary;
@@ -9,7 +10,9 @@ interface HistoryCardProps {
 }
 
 export const HistoryCard: FC<HistoryCardProps> = ({ summary, onClick }) => {
-  const isToday = summary.date === new Date().toISOString().split('T')[0];
+  // 今日の日付をローカルタイムゾーンで取得（レンダリング間で安定）
+  const today = useMemo(() => getLocalDateString(), []);
+  const isToday = summary.date === today;
   const resistanceRate =
     summary.totalSmoked + summary.totalResisted > 0
       ? Math.round((summary.totalResisted / (summary.totalSmoked + summary.totalResisted)) * 100)

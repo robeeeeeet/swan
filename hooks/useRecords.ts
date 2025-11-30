@@ -26,6 +26,7 @@ import {
   saveSummary,
 } from '@/lib/indexeddb';
 import { calculateDailySummary } from '@/lib/utils/summary';
+import { getLocalDateString } from '@/lib/utils/date';
 
 export function useRecords() {
   const user = useUserStore((state) => state.user);
@@ -42,10 +43,9 @@ export function useRecords() {
 
   const [syncPending, setSyncPending] = useState(false);
 
-  // Get today's date in YYYY-MM-DD format
+  // Get today's date in YYYY-MM-DD format (local timezone)
   const getTodayDate = useCallback(() => {
-    const now = new Date();
-    return now.toISOString().split('T')[0];
+    return getLocalDateString();
   }, []);
 
   // Load today's records on mount

@@ -91,7 +91,7 @@ export const SOSModal: FC<SOSModalProps> = ({
         {/* Just record */}
         <div className="pt-4 border-t border-neutral-200 dark:border-neutral-700">
           <Button
-            variant="ghost"
+            variant="outline"
             fullWidth
             onClick={handleJustRecord}
           >

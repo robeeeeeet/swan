@@ -28,7 +28,7 @@ export default function DashboardPage() {
     syncPending,
     isOnline,
   } = useRecords();
-  const { stats: achievementStats, isLoading: achievementsLoading } = useAchievements();
+  const { stats: achievementStats, isLoading: achievementsLoading, refresh: refreshAchievements } = useAchievements();
 
   // Modal states
   const [showSOSModal, setShowSOSModal] = useState(false);
@@ -97,7 +97,12 @@ export default function DashboardPage() {
         setFeedbackMessage(getRandomMessage(RESISTANCE_MESSAGES));
       } else if (pendingRecordType === 'smoked') {
         setFeedbackMessage(getRandomMessage(NEUTRAL_MESSAGES));
+      } else if (pendingRecordType === 'craved') {
+        setFeedbackMessage('記録しました');
       }
+
+      // Refresh achievements panel to show updated stats
+      refreshAchievements();
 
       // Close modal
       setShowTagModal(false);
@@ -281,13 +286,14 @@ export default function DashboardPage() {
           {/* Action buttons */}
           <div className="flex gap-3 mt-6">
             <Button
-              variant="ghost"
+              variant="outline"
               fullWidth
               onClick={() => {
                 setShowTagModal(false);
                 setPendingRecordType(null);
                 setSelectedTags([]);
               }}
+              disabled={isSubmitting}
             >
               キャンセル
             </Button>
@@ -296,8 +302,9 @@ export default function DashboardPage() {
               fullWidth
               onClick={submitRecord}
               disabled={isSubmitting}
+              loading={isSubmitting}
             >
-              {isSubmitting ? '記録中...' : '記録する'}
+              記録する
             </Button>
           </div>
         </div>

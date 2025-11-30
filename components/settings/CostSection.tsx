@@ -1,6 +1,6 @@
 'use client';
 
-import { FC } from 'react';
+import { FC, useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { AppSettings } from '@/types';
 
@@ -17,6 +17,47 @@ interface CostSectionProps {
  * - 1本の喫煙時間
  */
 export const CostSection: FC<CostSectionProps> = ({ app, onUpdate }) => {
+  // ローカル状態で入力値を管理
+  const [priceInput, setPriceInput] = useState(app.cigarettePrice.toString());
+  const [packInput, setPackInput] = useState(app.cigarettesPerPack.toString());
+
+  // 親からの値が変わったら同期
+  useEffect(() => {
+    setPriceInput(app.cigarettePrice.toString());
+  }, [app.cigarettePrice]);
+
+  useEffect(() => {
+    setPackInput(app.cigarettesPerPack.toString());
+  }, [app.cigarettesPerPack]);
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '' || /^\d+$/.test(value)) {
+      setPriceInput(value);
+    }
+  };
+
+  const handlePackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '' || /^\d+$/.test(value)) {
+      setPackInput(value);
+    }
+  };
+
+  const handlePriceBlur = () => {
+    const numValue = parseInt(priceInput) || 0;
+    const clampedValue = Math.min(Math.max(numValue, 0), 10000);
+    setPriceInput(clampedValue.toString());
+    onUpdate({ cigarettePrice: clampedValue });
+  };
+
+  const handlePackBlur = () => {
+    const numValue = parseInt(packInput) || 20;
+    const clampedValue = Math.min(Math.max(numValue, 1), 100);
+    setPackInput(clampedValue.toString());
+    onUpdate({ cigarettesPerPack: clampedValue });
+  };
+
   // 1本あたりの価格を計算
   const pricePerCigarette = Math.round(app.cigarettePrice / app.cigarettesPerPack);
 
@@ -43,16 +84,14 @@ export const CostSection: FC<CostSectionProps> = ({ app, onUpdate }) => {
           <div className="flex items-center gap-3">
             <input
               id="cigarettePrice"
-              type="number"
-              min="0"
-              max="10000"
-              step="10"
-              value={app.cigarettePrice}
-              onChange={(e) =>
-                onUpdate({ cigarettePrice: parseInt(e.target.value) || 0 })
-              }
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={priceInput}
+              onChange={handlePriceChange}
+              onBlur={handlePriceBlur}
               className="
-                flex-1 px-4 py-3 text-lg font-semibold
+                flex-1 px-4 py-3 text-lg font-semibold text-center
                 bg-white dark:bg-slate-700
                 border-2 border-gray-300 dark:border-slate-600
                 rounded-xl
@@ -76,15 +115,14 @@ export const CostSection: FC<CostSectionProps> = ({ app, onUpdate }) => {
           <div className="flex items-center gap-3">
             <input
               id="cigarettesPerPack"
-              type="number"
-              min="1"
-              max="100"
-              value={app.cigarettesPerPack}
-              onChange={(e) =>
-                onUpdate({ cigarettesPerPack: parseInt(e.target.value) || 20 })
-              }
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={packInput}
+              onChange={handlePackChange}
+              onBlur={handlePackBlur}
               className="
-                flex-1 px-4 py-3 text-lg font-semibold
+                flex-1 px-4 py-3 text-lg font-semibold text-center
                 bg-white dark:bg-slate-700
                 border-2 border-gray-300 dark:border-slate-600
                 rounded-xl

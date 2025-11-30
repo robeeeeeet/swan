@@ -7,15 +7,22 @@ type BreathingPhase = 'inhale' | 'hold' | 'exhale' | 'pause';
 
 interface BreathingCircleProps {
   onComplete?: () => void;
+  onBackToDashboard?: () => void;
 }
 
-export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete }) => {
+export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete, onBackToDashboard }) => {
   const [isActive, setIsActive] = useState(false);
   const [phase, setPhase] = useState<BreathingPhase>('inhale');
   const [cycleCount, setCycleCount] = useState(0);
   const [secondsInPhase, setSecondsInPhase] = useState(0);
 
   // 呼吸パターン（秒）
+  // 「4-4-6-2」パターンは「ボックス呼吸法」と「4-7-8呼吸法」を組み合わせたもの
+  // - 吸う（4秒）: 肺を十分に膨らませる
+  // - 止める（4秒）: 酸素の吸収を促進
+  // - 吐く（6秒）: 副交感神経を活性化（吐く時間を長くすることでリラックス効果UP）
+  // - 休憩（2秒）: 次のサイクルへの準備
+  // 参考: 医学的に推奨されるリラクゼーション呼吸法をベースに設計
   const BREATHING_PATTERN = {
     inhale: 4,    // 吸う
     hold: 4,      // 止める
@@ -67,14 +74,21 @@ export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete }) => {
 
       if (newCycleCount >= TOTAL_CYCLES) {
         setIsActive(false);
-        onComplete?.();
         return;
       }
     }
 
     setPhase(nextPhase);
     setSecondsInPhase(0);
-  }, [isActive, phase, secondsInPhase, cycleCount, onComplete]);
+  }, [isActive, phase, secondsInPhase, cycleCount]);
+
+  // 完了時のコールバックを別のuseEffectで処理（レンダリング外で実行）
+  const isCompleted = cycleCount >= TOTAL_CYCLES && !isActive;
+  useEffect(() => {
+    if (isCompleted && onComplete) {
+      onComplete();
+    }
+  }, [isCompleted, onComplete]);
 
   const handleStart = useCallback(() => {
     setIsActive(true);
@@ -91,7 +105,6 @@ export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete }) => {
   }, []);
 
   const currentScale = PHASE_SCALES[phase];
-  const isCompleted = cycleCount >= TOTAL_CYCLES && !isActive;
 
   return (
     <div className="flex flex-col items-center justify-center space-y-8 min-h-[600px]">
@@ -194,7 +207,7 @@ export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete }) => {
       )}
 
       {/* コントロールボタン */}
-      <div className="flex gap-4 w-full max-w-md px-4">
+      <div className="flex flex-col gap-3 w-full max-w-md px-4">
         {!isActive && !isCompleted && (
           <Button
             variant="primary"
@@ -220,15 +233,28 @@ export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete }) => {
         )}
 
         {isCompleted && (
-          <Button
-            variant="success"
-            size="lg"
-            fullWidth
-            onClick={handleStart}
-            aria-label="もう一度深呼吸"
-          >
-            もう一度
-          </Button>
+          <>
+            <Button
+              variant="success"
+              size="lg"
+              fullWidth
+              onClick={handleStart}
+              aria-label="もう一度深呼吸"
+            >
+              もう一度
+            </Button>
+            {onBackToDashboard && (
+              <Button
+                variant="secondary"
+                size="lg"
+                fullWidth
+                onClick={onBackToDashboard}
+                aria-label="ダッシュボードに戻る"
+              >
+                ダッシュボードに戻る
+              </Button>
+            )}
+          </>
         )}
       </div>
     </div>

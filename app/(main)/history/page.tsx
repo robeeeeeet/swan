@@ -1,14 +1,18 @@
 'use client';
 
 import { FC, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useHistory } from '@/hooks/useHistory';
 import { HistoryCard } from '@/components/history/HistoryCard';
 import { WeekStats } from '@/components/history/WeekStats';
 import { SimpleBarChart } from '@/components/history/SimpleBarChart';
 import { DayDetailModal } from '@/components/history/DayDetailModal';
+import Button from '@/components/ui/Button';
 import { DailySummary } from '@/types';
+import { getLocalMidnight, getLocalDateString, getChartDateLabel } from '@/lib/utils/date';
 
 const HistoryPage: FC = () => {
+  const router = useRouter();
   const {
     records,
     summaries,
@@ -27,19 +31,30 @@ const HistoryPage: FC = () => {
     ? records.filter((r) => r.date === selectedDay.date)
     : [];
 
-  // チャート用のデータを準備（直近7日分）
-  const chartData = summaries
-    .slice(0, 7)
-    .reverse()
-    .map((s) => {
-      const date = new Date(s.date);
-      const dayLabel = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
-      return {
-        date: s.date,
-        count: s.totalSmoked,
-        label: `${date.getDate()}(${dayLabel})`,
-      };
-    });
+  // チャート用のデータを準備（直近7日分、データがない日は0として表示）
+  // ローカルタイムゾーンを使用して正しい日付を表示
+  const chartData = (() => {
+    const result = [];
+    const today = getLocalMidnight();
+
+    // 過去7日分のデータを生成（今日から6日前まで）
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateString = getLocalDateString(date);
+
+      // summariesから該当日のデータを探す
+      const summary = summaries.find((s) => s.date === dateString);
+
+      result.push({
+        date: dateString,
+        count: summary?.totalSmoked ?? 0,
+        label: getChartDateLabel(date),
+      });
+    }
+
+    return result;
+  })();
 
   const handleCardClick = (summary: DailySummary) => {
     setSelectedDay(summary);
@@ -66,8 +81,16 @@ const HistoryPage: FC = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
       {/* ヘッダー */}
       <header className="sticky top-0 z-40 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm">
-        <div className="px-4 py-4 max-w-lg mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">履歴</h1>
+        <div className="px-4 py-3 max-w-lg mx-auto flex items-center justify-between">
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/dashboard')}
+            aria-label="ダッシュボードに戻る"
+          >
+            ← 戻る
+          </Button>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">履歴</h1>
+          <div className="w-16" /> {/* スペーサー */}
         </div>
       </header>
 
@@ -83,10 +106,10 @@ const HistoryPage: FC = () => {
             <button
               key={period.value}
               onClick={() => setSelectedPeriod(period.value)}
-              className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all min-h-[44px] ${
                 selectedPeriod === period.value
-                  ? 'bg-swan-primary-500 text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-slate-700 hover:border-swan-primary-300'
+                  ? 'bg-teal-500 text-white shadow-sm'
+                  : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-slate-700 hover:border-teal-400'
               }`}
             >
               {period.label}
@@ -97,8 +120,8 @@ const HistoryPage: FC = () => {
         {/* 統計サマリー */}
         <WeekStats stats={weekStats} period={selectedPeriod} />
 
-        {/* 本数推移チャート */}
-        {chartData.length > 0 && <SimpleBarChart data={chartData} />}
+        {/* 本数推移チャート - 常に7日分表示 */}
+        <SimpleBarChart data={chartData} />
 
         {/* 日別カード一覧 */}
         <div>

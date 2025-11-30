@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { getSummariesByUser } from '@/lib/indexeddb/summaries';
 import { calculateCumulativeStats } from '@/lib/utils/summary';
@@ -29,34 +29,42 @@ export function useAchievements() {
     averageResistanceRate: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    async function loadAchievements() {
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        // Fetch all summaries from IndexedDB
-        const summaries = await getSummariesByUser(user.uid);
-
-        // Calculate cumulative stats
-        const cumulativeStats = calculateCumulativeStats(summaries);
-
-        setStats(cumulativeStats);
-      } catch (error) {
-        console.error('Failed to load achievements:', error);
-      } finally {
-        setIsLoading(false);
-      }
+  const loadAchievements = useCallback(async () => {
+    if (!user) {
+      setIsLoading(false);
+      return;
     }
 
-    loadAchievements();
+    try {
+      // Fetch all summaries from IndexedDB
+      const summaries = await getSummariesByUser(user.uid);
+
+      // Calculate cumulative stats
+      const cumulativeStats = calculateCumulativeStats(summaries);
+
+      setStats(cumulativeStats);
+    } catch (error) {
+      console.error('Failed to load achievements:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [user]);
+
+  useEffect(() => {
+    loadAchievements();
+  }, [loadAchievements, refreshKey]);
+
+  // Refresh function to manually trigger data reload
+  const refresh = useCallback(() => {
+    setIsLoading(true);
+    setRefreshKey((prev) => prev + 1);
+  }, []);
 
   return {
     stats,
     isLoading,
+    refresh,
   };
 }

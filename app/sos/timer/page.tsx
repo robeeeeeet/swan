@@ -19,8 +19,7 @@ const TimerPage: FC = () => {
     setShowCelebration(false);
   };
 
-  const handleRecordSuccess = () => {
-    // TODO: 「我慢できた」記録を保存
+  const handleBackToDashboard = () => {
     router.push('/dashboard');
   };
 
@@ -33,8 +32,8 @@ const TimerPage: FC = () => {
         <div className="px-4 py-3 max-w-lg mx-auto flex items-center justify-between">
           <Button
             variant="ghost"
-            onClick={() => router.back()}
-            aria-label="戻る"
+            onClick={handleBackToDashboard}
+            aria-label="ダッシュボードに戻る"
           >
             ← 戻る
           </Button>
@@ -48,7 +47,7 @@ const TimerPage: FC = () => {
       {/* メインコンテンツ */}
       <main className="px-4 py-8 max-w-lg mx-auto">
         {/* タイマーコンポーネント */}
-        <Timer onComplete={handleComplete} />
+        <Timer onComplete={handleComplete} onBackToDashboard={handleBackToDashboard} />
 
         {/* ヒント */}
         <div className="mt-12 space-y-4">

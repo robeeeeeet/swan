@@ -6,11 +6,13 @@ import Button from '@/components/ui/Button';
 interface TimerProps {
   initialSeconds?: number;
   onComplete?: () => void;
+  onBackToDashboard?: () => void;
 }
 
 export const Timer: FC<TimerProps> = ({
   initialSeconds = 180, // デフォルト3分
-  onComplete
+  onComplete,
+  onBackToDashboard
 }) => {
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const [isRunning, setIsRunning] = useState(false);
@@ -33,7 +35,6 @@ export const Timer: FC<TimerProps> = ({
         if (prev <= 1) {
           setIsRunning(false);
           setHasCompleted(true);
-          onComplete?.();
           return 0;
         }
         return prev - 1;
@@ -41,7 +42,14 @@ export const Timer: FC<TimerProps> = ({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isRunning, secondsLeft, onComplete]);
+  }, [isRunning, secondsLeft]);
+
+  // 完了時のコールバックを別のuseEffectで処理（レンダリング外で実行）
+  useEffect(() => {
+    if (hasCompleted && onComplete) {
+      onComplete();
+    }
+  }, [hasCompleted, onComplete]);
 
   const handleStart = useCallback(() => {
     setIsRunning(true);
@@ -159,8 +167,9 @@ export const Timer: FC<TimerProps> = ({
       </div>
 
       {/* コントロールボタン */}
-      <div className="flex gap-4 w-full max-w-md px-4">
-        {!isRunning && !hasCompleted && (
+      <div className="flex flex-col gap-3 w-full max-w-md px-4">
+        {/* 初期状態：開始ボタンのみ */}
+        {!isRunning && !hasCompleted && secondsLeft === initialSeconds && (
           <Button
             variant="primary"
             size="lg"
@@ -172,8 +181,9 @@ export const Timer: FC<TimerProps> = ({
           </Button>
         )}
 
+        {/* 実行中：一時停止とリセット（横並び） */}
         {isRunning && (
-          <>
+          <div className="flex gap-3">
             <Button
               variant="secondary"
               size="lg"
@@ -186,16 +196,18 @@ export const Timer: FC<TimerProps> = ({
             <Button
               variant="ghost"
               size="lg"
+              className="min-w-[100px]"
               onClick={handleReset}
               aria-label="タイマーをリセット"
             >
               リセット
             </Button>
-          </>
+          </div>
         )}
 
+        {/* 一時停止中：再開とリセット（横並び） */}
         {!isRunning && secondsLeft > 0 && secondsLeft < initialSeconds && (
-          <>
+          <div className="flex gap-3">
             <Button
               variant="primary"
               size="lg"
@@ -208,24 +220,39 @@ export const Timer: FC<TimerProps> = ({
             <Button
               variant="ghost"
               size="lg"
+              className="min-w-[100px]"
               onClick={handleReset}
               aria-label="タイマーをリセット"
             >
               リセット
             </Button>
-          </>
+          </div>
         )}
 
+        {/* 完了後：もう一度とダッシュボードに戻る（縦並び） */}
         {hasCompleted && (
-          <Button
-            variant="success"
-            size="lg"
-            fullWidth
-            onClick={handleReset}
-            aria-label="タイマーをもう一度"
-          >
-            もう一度
-          </Button>
+          <>
+            <Button
+              variant="success"
+              size="lg"
+              fullWidth
+              onClick={handleReset}
+              aria-label="タイマーをもう一度"
+            >
+              もう一度
+            </Button>
+            {onBackToDashboard && (
+              <Button
+                variant="secondary"
+                size="lg"
+                fullWidth
+                onClick={onBackToDashboard}
+                aria-label="ダッシュボードに戻る"
+              >
+                ダッシュボードに戻る
+              </Button>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -13,6 +13,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { getRecordsByUser } from '@/lib/indexeddb/records';
 import { getSummaryByDate } from '@/lib/indexeddb/summaries';
 import { calculateDailySummary } from '@/lib/utils/summary';
+import { getLocalDateString, getLocalMidnight } from '@/lib/utils/date';
 
 export type HistoryPeriod = '7days' | '30days' | 'all';
 
@@ -50,8 +51,8 @@ export const useHistory = (): UseHistoryReturn => {
       // Get all records for the user
       const allRecords = await getRecordsByUser(user.uid);
 
-      // Filter records by date range
-      const startDate = new Date();
+      // Filter records by date range (using local timezone)
+      const startDate = getLocalMidnight();
       startDate.setDate(startDate.getDate() - days);
       const startTimestamp = startDate.getTime();
 
@@ -60,11 +61,12 @@ export const useHistory = (): UseHistoryReturn => {
 
       // Generate daily summaries
       const summariesMap = new Map<string, DailySummary>();
+      const todayStr = getLocalDateString();
 
       for (let i = 0; i < days; i++) {
-        const date = new Date();
+        const date = getLocalMidnight();
         date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = getLocalDateString(date);
 
         // Get existing summary or calculate new one
         let summary = await getSummaryByDate(user.uid, dateStr);
@@ -73,7 +75,7 @@ export const useHistory = (): UseHistoryReturn => {
           // Calculate summary from records
           const dayRecords = filteredRecords.filter(r => r.date === dateStr);
 
-          if (dayRecords.length > 0 || dateStr === new Date().toISOString().split('T')[0]) {
+          if (dayRecords.length > 0 || dateStr === todayStr) {
             summary = calculateDailySummary(
               user.uid,
               dateStr,
