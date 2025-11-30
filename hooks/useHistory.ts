@@ -7,6 +7,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { subDays, getTime } from 'date-fns';
 import { SmokingRecord, DailySummary } from '@/types';
 import { useUserStore } from '@/store/userStore';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -52,9 +53,9 @@ export const useHistory = (): UseHistoryReturn => {
       const allRecords = await getRecordsByUser(user.uid);
 
       // Filter records by date range (using local timezone)
-      const startDate = getLocalMidnight();
-      startDate.setDate(startDate.getDate() - days);
-      const startTimestamp = startDate.getTime();
+      const today = getLocalMidnight();
+      const startDate = subDays(today, days);
+      const startTimestamp = getTime(startDate);
 
       const filteredRecords = allRecords.filter(r => r.timestamp >= startTimestamp);
       setRecords(filteredRecords);
@@ -64,8 +65,7 @@ export const useHistory = (): UseHistoryReturn => {
       const todayStr = getLocalDateString();
 
       for (let i = 0; i < days; i++) {
-        const date = getLocalMidnight();
-        date.setDate(date.getDate() - i);
+        const date = subDays(today, i);
         const dateStr = getLocalDateString(date);
 
         // Get existing summary or calculate new one
@@ -95,7 +95,7 @@ export const useHistory = (): UseHistoryReturn => {
 
       // Convert to array and sort by date (newest first)
       const summariesArray = Array.from(summariesMap.values()).sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => b.date.localeCompare(a.date)
       );
 
       setSummaries(summariesArray);

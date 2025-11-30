@@ -1,6 +1,7 @@
 import { FC, useMemo } from 'react';
 import { DailySummary, SmokingRecord, SituationTag } from '@/types';
 import { formatDate, formatTime } from '@/lib/utils/summary';
+import { getHourFromTimestamp } from '@/lib/utils/date';
 import { SITUATION_TAGS } from '@/constants/tags';
 
 interface DayDetailModalProps {
@@ -20,7 +21,7 @@ export const DayDetailModal: FC<DayDetailModalProps> = ({
   const hourlyData = useMemo(() => {
     const hours = new Array(24).fill(0);
     records.forEach((record) => {
-      const hour = new Date(record.timestamp).getHours();
+      const hour = getHourFromTimestamp(record.timestamp);
       hours[hour]++;
     });
     return hours;
@@ -186,7 +187,7 @@ export const DayDetailModal: FC<DayDetailModalProps> = ({
                         {record.type === 'smoked' ? '🚬' : record.type === 'resisted' ? '✅' : '💭'}
                       </span>
                       <span className="font-medium text-gray-700 dark:text-gray-300 tabular-nums">
-                        {formatTime(new Date(record.timestamp).toISOString())}
+                        {formatTime(record.timestamp)}
                       </span>
                       {record.tags.length > 0 && (
                         <span className="text-gray-500 dark:text-gray-400">

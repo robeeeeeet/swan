@@ -158,7 +158,7 @@ swan/
 │   │   ├── gemini.ts
 │   │   └── prompts.ts
 │   └── utils/
-│       ├── date.ts         ✅ 実装済み
+│       ├── date.ts         ✅ 実装済み（date-fns使用、タイムゾーン対応）
 │       └── summary.ts      ✅ 実装済み（統計計算・フォーマット）
 ├── store/                  # Zustand ストア
 │   ├── useUserStore.ts
@@ -459,7 +459,10 @@ interface SyncQueueItem {
 - ✅ データ永続化層（Firestore統合）
 
 **Phase 1 バグ修正（2025-12-01 完了）:**
-- ✅ **タイムゾーン修正**: `lib/utils/date.ts` 新規作成（ローカル時刻で日付取得）
+- ✅ **タイムゾーン修正 + date-fns採用**: `lib/utils/date.ts`をdate-fnsベースに実装
+  - `format`, `startOfDay`, `subDays`, `getTime`, `parse`等を使用
+  - ローカルタイムゾーン自動使用（ブラウザ設定に従う）
+  - Tree-shaking対応で軽量バンドル
 - ✅ **SOS認証ガード**: `app/sos/layout.tsx` 新規作成（未認証アクセス防止）
 - ✅ **設定ページ修正**: 数値入力のローカルステート管理、Switch レイアウト修正
 - ✅ **SOSページ修正**: React setState エラー解消、ナビゲーション改善
@@ -696,6 +699,7 @@ CRON_SECRET=
 
 | バージョン | 日付 | 変更内容 |
 |-----------|------|---------|
+| 1.3.0 | 2025-12-01 | date-fns採用（タイムゾーン対応強化）、Phase 1バグ修正完了 |
 | 1.2.0 | 2025-11-30 | Phase 1完全完了（設定ページ実装）、実装進捗レポート更新 |
 | 1.1.0 | 2025-11-30 | データ永続化層実装完了、実装進捗レポート追加 |
 | 1.0.0 | 2025-11-30 | 初版作成 |

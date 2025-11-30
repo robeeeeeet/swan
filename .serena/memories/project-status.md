@@ -384,17 +384,29 @@ Phase 1のすべての機能が実装完了しました：
   - 4指標表示（💰節約金額、⏰取り戻した時間、🏆我慢成功回数、📅記録継続日数）
   - 励ましメッセージ機能（成功回数・節約金額に応じた動的メッセージ）
 
-### ✅ Phase 1 バグ修正完了（2025-12-01 NEW!）
+### ✅ Phase 1 バグ修正完了（2025-12-01）
 
 ブラウザ検証で発見されたバグを修正：
 
-#### タイムゾーン修正
+#### タイムゾーン修正 + date-fns採用
 - **問題**: `toISOString().split('T')[0]`がUTC日付を返し、0時～8時59分（JST）に記録すると前日の日付になる
-- **解決**: `lib/utils/date.ts`を新規作成、ローカルタイムゾーン対応
+- **解決**: `lib/utils/date.ts`をdate-fnsベースに実装
+  - `date-fns`パッケージ導入（Tree-shaking対応、軽量）
+  - `format`, `startOfDay`, `subDays`, `getTime`, `parse`等を使用
+  - 日本語ロケール対応（`date-fns/locale/ja`）
+- **利用可能な関数**:
   - `getLocalDateString()` - YYYY-MM-DD形式（ローカル）
-  - `getLocalMidnight()` - 深夜0時（ローカル）
-  - `getChartDateLabel()` - チャート用日付ラベル
-- **影響ファイル**: useRecords.ts, useHistory.ts, history/page.tsx, SimpleBarChart.tsx, HistoryCard.tsx
+  - `getLocalMidnight()` - 深夜0時（startOfDay使用）
+  - `parseLocalDateString()` - 文字列→Date（parse使用）
+  - `formatDateJapanese()` - "12月1日(月)"形式
+  - `formatTimeString()` - "14:30"形式
+  - `getHourFromTimestamp()` - タイムスタンプから時間取得
+- **影響ファイル**: 
+  - `lib/utils/date.ts` - date-fnsベースに全面書き換え
+  - `lib/utils/summary.ts` - date.tsからインポート
+  - `hooks/useHistory.ts` - subDays, getTime使用
+  - `app/(main)/history/page.tsx` - subDays使用
+  - `components/history/DayDetailModal.tsx` - getHourFromTimestamp使用
 
 #### SOS認証ガード追加
 - **問題**: `/sos/breathing`等に未認証でアクセス可能だった

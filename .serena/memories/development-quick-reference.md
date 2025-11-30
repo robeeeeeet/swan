@@ -415,37 +415,49 @@ npm run build 2>&1 | tee build.log
 
 次のステップ: Phase 2（PWA設定、iOSインストールガイド）
 
-## タイムゾーン対応日付ユーティリティ（NEW! 2025-12-01）
+## タイムゾーン対応日付ユーティリティ（date-fns使用）
+
+### date-fns採用理由
+- **Tree-shaking対応**: 使用する関数のみバンドル（軽量）
+- **TypeScript完全サポート**: 型安全な日付操作
+- **ローカルタイムゾーン自動使用**: ブラウザの設定に従う
 
 ### 問題: UTC vs ローカル時刻
 ```typescript
 // ❌ 間違い: UTCで日付を取得（0時～8:59 JSTで前日になる）
 const date = new Date().toISOString().split('T')[0];
 
-// ✅ 正解: ローカル時刻で日付を取得
+// ✅ 正解: date-fnsでローカル時刻を使用
 import { getLocalDateString } from '@/lib/utils/date';
 const date = getLocalDateString(); // "2025-12-01"
 ```
 
-### 利用可能な関数
+### 利用可能な関数（lib/utils/date.ts）
 ```typescript
 import {
-  getLocalDateString,    // YYYY-MM-DD形式（ローカル）
-  getLocalMidnight,      // 深夜0時のDateオブジェクト
-  parseLocalDateString,  // "2025-12-01" → Date
-  getJapaneseDayLabel,   // Date → "月", "火", etc.
-  getChartDateLabel,     // Date → "1(月)"
+  getLocalDateString,     // YYYY-MM-DD形式（ローカル）
+  getLocalMidnight,       // 深夜0時のDateオブジェクト（startOfDay使用）
+  parseLocalDateString,   // "2025-12-01" → Date（parse使用）
+  getJapaneseDayLabel,    // Date → "月", "火", etc.
+  getChartDateLabel,      // Date → "1(月)"
+  formatDateJapanese,     // Date → "12月1日(月)"
+  formatTimeString,       // timestamp → "14:30"
+  getHourFromTimestamp,   // timestamp → 14 (hour)
 } from '@/lib/utils/date';
+```
 
-// 今日の日付を取得
-const today = getLocalDateString(); // "2025-12-01"
+### date-fns直接利用
+```typescript
+import { subDays, format, startOfDay, getTime } from 'date-fns';
+import { ja } from 'date-fns/locale';
 
-// 7日前からのデータを取得
-const startDate = getLocalMidnight();
-startDate.setDate(startDate.getDate() - 7);
+// 7日前のデータを取得
+const today = startOfDay(new Date());
+const startDate = subDays(today, 7);
+const startTimestamp = getTime(startDate);
 
-// チャート用ラベル生成
-const label = getChartDateLabel(new Date()); // "1(日)"
+// 日本語フォーマット
+format(new Date(), 'M月d日(E)', { locale: ja }); // "12月1日(日)"
 ```
 
 ## 参考リンク

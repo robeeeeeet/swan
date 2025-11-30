@@ -2,17 +2,22 @@
  * Date Utilities
  *
  * Timezone-aware date handling utilities for the Swan app.
- * All functions use local timezone (JST in Japan) instead of UTC
- * to prevent date mismatches around midnight.
+ * Uses date-fns for consistent date manipulation.
+ * All functions use the browser's local timezone automatically.
  */
+
+import { format, startOfDay, parse, getDay, getDate, getHours } from 'date-fns';
+import { ja } from 'date-fns/locale';
+
+/**
+ * Japanese day labels for the week
+ */
+const JAPANESE_DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'] as const;
 
 /**
  * Returns the current local date in YYYY-MM-DD format.
  * This is timezone-safe and will return the correct date
- * regardless of the user's location.
- *
- * Unlike toISOString().split('T')[0] which uses UTC,
- * this function uses local date methods.
+ * based on the browser's locale.
  *
  * @param date - Optional Date object (defaults to current time)
  * @returns Date string in YYYY-MM-DD format (local timezone)
@@ -20,13 +25,9 @@
  * @example
  * // In Japan (JST) at 01:00 on Jan 1, 2024
  * getLocalDateString() // Returns "2024-01-01"
- * // Instead of toISOString() which would return "2023-12-31"
  */
 export function getLocalDateString(date: Date = new Date()): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return format(date, 'yyyy-MM-dd');
 }
 
 /**
@@ -37,9 +38,7 @@ export function getLocalDateString(date: Date = new Date()): string {
  * @returns Date object with time set to 00:00:00 local time
  */
 export function getLocalMidnight(date: Date = new Date()): Date {
-  const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
-  return result;
+  return startOfDay(date);
 }
 
 /**
@@ -54,8 +53,7 @@ export function getLocalMidnight(date: Date = new Date()): Date {
  * parseLocalDateString("2024-01-01") // Jan 1, 2024 00:00:00 local
  */
 export function parseLocalDateString(dateString: string): Date {
-  const [year, month, day] = dateString.split('-').map(Number);
-  return new Date(year, month - 1, day);
+  return parse(dateString, 'yyyy-MM-dd', new Date());
 }
 
 /**
@@ -65,7 +63,7 @@ export function parseLocalDateString(dateString: string): Date {
  * @returns Japanese day label (日, 月, 火, 水, 木, 金, 土)
  */
 export function getJapaneseDayLabel(date: Date): string {
-  return ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
+  return JAPANESE_DAY_LABELS[getDay(date)];
 }
 
 /**
@@ -75,7 +73,45 @@ export function getJapaneseDayLabel(date: Date): string {
  * @returns Formatted label like "1(月)"
  */
 export function getChartDateLabel(date: Date): string {
-  const day = date.getDate();
+  const day = getDate(date);
   const dayLabel = getJapaneseDayLabel(date);
   return `${day}(${dayLabel})`;
+}
+
+/**
+ * Formats a date to Japanese format (e.g., "11月30日(土)")
+ *
+ * @param date - Date object or date string in YYYY-MM-DD format
+ * @returns Formatted date string
+ */
+export function formatDateJapanese(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? parseLocalDateString(date) : date;
+  const dayLabel = getJapaneseDayLabel(dateObj);
+  return format(dateObj, `M月d日(${dayLabel})`, { locale: ja });
+}
+
+/**
+ * Formats a timestamp to time string (e.g., "14:30")
+ *
+ * @param timestamp - Date object, timestamp number, or ISO timestamp string
+ * @returns Formatted time string
+ */
+export function formatTimeString(timestamp: Date | number | string): string {
+  const date = typeof timestamp === 'string' || typeof timestamp === 'number'
+    ? new Date(timestamp)
+    : timestamp;
+  return format(date, 'HH:mm');
+}
+
+/**
+ * Gets the hour from a timestamp
+ *
+ * @param timestamp - Date object, timestamp number, or ISO timestamp string
+ * @returns Hour (0-23)
+ */
+export function getHourFromTimestamp(timestamp: Date | number | string): number {
+  const date = typeof timestamp === 'string' || typeof timestamp === 'number'
+    ? new Date(timestamp)
+    : timestamp;
+  return getHours(date);
 }

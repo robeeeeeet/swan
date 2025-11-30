@@ -4,7 +4,9 @@
  * Functions for calculating and updating daily summaries based on records.
  */
 
+import { getHours } from 'date-fns';
 import { SmokingRecord, DailySummary, SituationTag } from '@/types';
+import { formatDateJapanese, formatTimeString } from './date';
 
 /**
  * Calculates a daily summary from an array of smoking records.
@@ -89,25 +91,16 @@ export function formatMoney(amount: number): string {
  * @returns Formatted date (e.g., "11月30日(土)")
  */
 export function formatDate(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00');
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
-
-  return `${month}月${day}日(${dayOfWeek})`;
+  return formatDateJapanese(dateStr);
 }
 
 /**
  * Formats a timestamp to time string
- * @param timestampStr - ISO timestamp string
+ * @param timestamp - ISO timestamp string or Unix timestamp in milliseconds
  * @returns Formatted time (e.g., "14:30")
  */
-export function formatTime(timestampStr: string): string {
-  const date = new Date(timestampStr);
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-
-  return `${hours}:${minutes}`;
+export function formatTime(timestamp: string | number): string {
+  return formatTimeString(timestamp);
 }
 
 /**
@@ -188,7 +181,7 @@ export function calculateResistanceRate(
 export function checkGoalProgress(
   currentCount: number,
   dailyTarget: number,
-  currentHour: number = new Date().getHours()
+  currentHour: number = getHours(new Date())
 ): {
   onTrack: boolean;
   projectedTotal: number;

@@ -276,37 +276,67 @@ lib/indexeddb/index.ts (オフラインファースト)
 3. **コード分割**: 動的インポートで初期バンドルサイズ削減
 4. **Service Worker キャッシュ**: 静的アセットを積極的にキャッシュ
 
-## タイムゾーン対応（2025-12-01 NEW!）
+## タイムゾーン対応（date-fns採用: 2025-12-01）
 
 ### 問題: UTCとローカル時刻の混在
 JavaScriptの`toISOString()`はUTC時刻を返すため、日本（JST = UTC+9）では問題が発生：
 - 午前0時～8時59分（JST）に記録すると、UTCでは前日の日付になる
 - 例: 2024年1月1日 01:00 JST → 2023年12月31日 16:00 UTC
 
-### 解決策: lib/utils/date.ts
-すべての日付操作にローカルタイムゾーン対応の関数を使用：
+### 解決策: date-fns採用
+すべての日付操作にdate-fnsを使用：
 
 ```typescript
-// ✅ 正しいアプローチ
+// lib/utils/date.ts - date-fnsベースの実装
+import { format, startOfDay, parse, getDay, getDate, getHours } from 'date-fns';
+import { ja } from 'date-fns/locale';
+
 export function getLocalDateString(date: Date = new Date()): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return format(date, 'yyyy-MM-dd');
 }
+
+export function getLocalMidnight(date: Date = new Date()): Date {
+  return startOfDay(date);
+}
+```
+
+### date-fns採用理由
+1. **Tree-shaking対応**: 必要な関数のみバンドル（バンドルサイズ最小化）
+2. **TypeScript完全サポート**: 型定義が完璧、IDE補完が効く
+3. **ローカルタイムゾーン自動使用**: ブラウザの設定に自動で従う
+4. **関数型API**: 純粋関数で副作用なし、テストしやすい
+5. **日本語ロケール対応**: `ja`ロケールで曜日等の日本語表示
+
+### 主な置き換えパターン
+```typescript
+// 日付の減算
+// Before: date.setDate(date.getDate() - 7)
+// After:  subDays(date, 7)
+
+// 深夜0時取得
+// Before: date.setHours(0, 0, 0, 0)
+// After:  startOfDay(date)
+
+// タイムスタンプ取得
+// Before: date.getTime()
+// After:  getTime(date)
+
+// 日本語フォーマット
+// Before: 手動で組み立て
+// After:  format(date, 'M月d日(E)', { locale: ja })
 ```
 
 ### 影響範囲
 以下のファイルを更新：
-- `hooks/useRecords.ts` - getTodayDate関数
-- `hooks/useHistory.ts` - 日付フィルタリング
-- `app/(main)/history/page.tsx` - チャートデータ生成
-- `components/history/SimpleBarChart.tsx` - 今日判定
-- `components/history/HistoryCard.tsx` - 今日判定
+- `lib/utils/date.ts` - date-fnsベースに全面書き換え
+- `lib/utils/summary.ts` - date.tsからインポート
+- `hooks/useHistory.ts` - `subDays`, `getTime`使用
+- `app/(main)/history/page.tsx` - `subDays`使用
+- `components/history/DayDetailModal.tsx` - `getHourFromTimestamp`使用
 
 ### 設計判断
-1. **専用ユーティリティ**: 日付操作を一元管理
-2. **ライブラリ不使用**: dayjs等を使わず軽量に実装
+1. **date-fns採用**: PWAでバンドルサイズ重視、Tree-shakingで最適化
+2. **ラッパー関数維持**: 既存APIとの互換性を保持
 3. **後方互換性**: 既存のYYYY-MM-DD形式を維持
 
 ## SOS認証ガード（2025-12-01 NEW!）

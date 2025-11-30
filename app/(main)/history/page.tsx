@@ -2,6 +2,7 @@
 
 import { FC, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { subDays } from 'date-fns';
 import { useHistory } from '@/hooks/useHistory';
 import { HistoryCard } from '@/components/history/HistoryCard';
 import { WeekStats } from '@/components/history/WeekStats';
@@ -39,8 +40,7 @@ const HistoryPage: FC = () => {
 
     // 過去7日分のデータを生成（今日から6日前まで）
     for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
+      const date = subDays(today, i);
       const dateString = getLocalDateString(date);
 
       // summariesから該当日のデータを探す
