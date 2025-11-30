@@ -110,14 +110,14 @@ button, a, input, select, textarea {
 - **数字**: Tabular figures有効（`font-feature-settings: "tnum" 1`）
   - 金額や本数の表示で桁が揃う
 
-## Firebase 統合（予定）
+## Firebase 統合
 
-### 認証戦略
+### 認証戦略（✅ 実装済み - lib/firebase/auth.ts）
 1. **匿名認証**: 初回アクセス時に自動で匿名ユーザー作成
-2. **アップグレード**: 後からGoogle/Apple認証に切り替え可能
+2. **アップグレード**: 後からGoogle認証に切り替え可能（linkAnonymousWithGoogle）
 3. **データ継続**: 匿名→認証済みへの移行時にデータを保持
 
-### Firestore データ設計
+### Firestore データ設計（⏳ 未実装 - スキーマ確定）
 ```
 users/{userId}/
   ├── profile
@@ -128,7 +128,7 @@ users/{userId}/
   └── dailyStats/{YYYY-MM-DD}
 ```
 
-### オフライン対応
+### オフライン対応（⏳ 未実装 - lib/indexeddbディレクトリ準備済み）
 1. **Firestore Persistence**: ローカルキャッシュ有効化
 2. **IndexedDB Queue**: オフライン時の変更を保存
 3. **同期処理**: オンライン復帰時に自動同期

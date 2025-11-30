@@ -236,22 +236,28 @@ npm run build 2>&1 | tee build.log
 
 ## Phase 1 実装チェックリスト
 
-### Week 1
-- [ ] Firebase プロジェクト作成
-- [ ] .env.local設定
-- [ ] Firebase初期化（lib/firebase/config.ts）
-- [ ] 匿名認証実装
-- [ ] Button, Card, Modalコンポーネント
-- [ ] ダッシュボードページ基本UI
+### Week 1 ✅ 完了
+- [x] Firebase プロジェクト設定（lib/firebase/config.ts）
+- [x] .env.example作成（.env.localはユーザーが設定）
+- [x] Firebase Auth初期化（lib/firebase/auth.ts）
+- [x] 匿名認証・Googleログイン実装
+- [x] Button, Card, Modalコンポーネント
+- [x] Celebrationコンポーネント（祝福アニメーション）
+- [x] ダッシュボードページ基本UI
+- [x] Zustandストア（user, records, settings）
+- [x] TypeScript型定義
+- [x] 定数ファイル（tags, messages）
 
-### Week 2
+### Week 2（進行中）
 - [ ] 喫煙記録API（POST /api/smoke-records）
-- [ ] 「吸った」ボタン機能
-- [ ] タグセレクター
-- [ ] 「我慢できた」ボタン機能
+- [x] 「吸った」ボタン機能（UI実装済み）
+- [x] タグセレクター（UI実装済み）
+- [x] 「我慢できた」ボタン機能（UI実装済み）
 - [ ] 3分タイマー（SOS）
 - [ ] 深呼吸アニメーション
-- [ ] 祝福アニメーション
+- [x] 祝福アニメーション（Celebration.tsx）
+- [ ] IndexedDB統合
+- [ ] Firestore CRUD操作
 
 ## 参考リンク
 

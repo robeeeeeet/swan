@@ -146,6 +146,82 @@ Gemini 2.0 Flash APIの用途:
 4. 基本認証フローの実装
 5. `docs/development-plan.md`のフェーズ別計画に従う
 
+## Claude Code利用ガイドライン
+
+### サブエージェントの活用
+
+タスクを任せられる専用サブエージェントがある場合は**必ず利用すること**。
+
+利用可能なサブエージェント:
+- **component-builder** - React/TypeScriptコンポーネント作成時
+- **pwa-optimizer** - PWA機能（Service Worker、通知、オフライン対応）の実装・最適化時
+- **security-reviewer** - セキュリティレビュー時（読み取り専用）
+- **playwright-tester** - E2Eテスト作成・実行時
+- **performance-tester** - パフォーマンステスト・最適化時
+
+### スキルの活用
+
+タスク内容に応じた専門スキルを**必ず読み込むこと**。
+
+#### フロントエンド改修時（必須）
+
+以下の3つのスキルを**必ず併用**すること:
+
+1. **frontend-design** - 独創的で高品質なUIデザイン生成
+2. **swan-design-system** - Swanアプリ統一デザイン言語（カラー、コンポーネント、UXパターン）
+3. **react-best-practices** - React/TypeScript/Next.jsベストプラクティス
+
+この3スキル併用により、**デザイン品質・実装品質・Swan独自スタイルの三位一体**を実現します。
+
+#### その他のスキル
+
+タスクに応じて以下のスキルも活用:
+- **pwa-patterns** - PWA実装時（Service Worker、Web Push、オフライン対応）
+- **performance-patterns** - パフォーマンス最適化時（Core Web Vitals、バンドル最適化）
+- **security-patterns** - セキュリティ実装・レビュー時（OWASP対策、認証）
+- **testing-patterns** - テスト作成時（E2E、ユニット、モック戦略）
+
+### ブラウザでの動作確認
+
+**フロントエンドの実装が一段落したら、Playwright MCPを利用して実装を実際のブラウザで確認すること**。
+
+確認すべき項目:
+- ✅ レイアウトが正しく表示されているか
+- ✅ Swan Design Systemのカラー・スタイルが適用されているか
+- ✅ レスポンシブデザインが機能しているか（モバイル・タブレット・デスクトップ）
+- ✅ インタラクション（クリック、ホバー、フォーカス）が正しく動作するか
+- ✅ アニメーションが適切に表示されるか
+- ✅ タッチターゲットが44px以上あるか
+- ✅ ダークモード対応が正しく機能するか
+
+Playwright MCPの活用方法:
+```bash
+1. 開発サーバーを起動（npm run dev）
+2. Playwright MCPでブラウザを開く
+3. 実装したページ・コンポーネントに遷移
+4. スナップショット・スクリーンショットで確認
+5. 問題があれば修正 → 再確認
+```
+
+### 実行例
+
+```bash
+# フロントエンドコンポーネント作成時
+1. frontend-design, swan-design-system, react-best-practices スキルを読み込む
+2. component-builder サブエージェントを起動
+3. 実装 → レビュー → Playwright MCPでブラウザ確認 → 完成
+
+# PWA機能実装時
+1. pwa-patterns, swan-design-system スキルを読み込む
+2. pwa-optimizer サブエージェントを起動
+3. 実装 → テスト → Playwright MCPでブラウザ確認 → 完成
+
+# セキュリティレビュー時
+1. security-patterns スキルを読み込む
+2. security-reviewer サブエージェントを起動（読み取り専用）
+3. レビューレポート生成
+```
+
 ## テスト戦略
 
 - **ユニットテスト**: コアビジネスロジック（utils、計算関数）
