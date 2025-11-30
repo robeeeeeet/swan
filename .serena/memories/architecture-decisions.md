@@ -117,21 +117,125 @@ button, a, input, select, textarea {
 2. **アップグレード**: 後からGoogle認証に切り替え可能（linkAnonymousWithGoogle）
 3. **データ継続**: 匿名→認証済みへの移行時にデータを保持
 
-### Firestore データ設計（⏳ 未実装 - スキーマ確定）
+### Firestore データ設計（✅ 実装完了 - 2025-11-30）
+
+#### コレクション構造
 ```
-users/{userId}/
-  ├── profile
-  ├── settings
-  ├── pushSubscriptions/{subscriptionId}
-  ├── smokeRecords/{recordId}
-  ├── copingRecords/{recordId}
-  └── dailyStats/{YYYY-MM-DD}
+records/ (トップレベルコレクション)
+  └── {recordId}/
+      ├── id: string (ユーザーID_タイムスタンプ)
+      ├── userId: string
+      ├── type: "smoked" | "craved" | "resisted"
+      ├── timestamp: number (Unix timestamp)
+      ├── date: string (YYYY-MM-DD)
+      ├── tags: SituationTag[]
+      └── note?: string
+
+summaries/ (トップレベルコレクション)
+  └── {summaryId}/ (format: userId_YYYY-MM-DD)
+      ├── id: string
+      ├── userId: string
+      ├── date: string (YYYY-MM-DD)
+      ├── totalSmoked: number
+      ├── totalCraved: number
+      ├── totalResisted: number
+      ├── moneySaved: number
+      ├── minutesSaved: number
+      ├── mostCommonTags: SituationTag[]
+      ├── dailyTarget: number
+      ├── goalMet: boolean
+      └── resistanceRate: number
+
+settings/ (トップレベルコレクション)
+  └── {userId}/
+      ├── userId: string
+      ├── notifications: NotificationSettings
+      ├── goals: GoalSettings
+      └── app: AppSettings
 ```
 
-### オフライン対応（⏳ 未実装 - lib/indexeddbディレクトリ準備済み）
-1. **Firestore Persistence**: ローカルキャッシュ有効化
-2. **IndexedDB Queue**: オフライン時の変更を保存
-3. **同期処理**: オンライン復帰時に自動同期
+#### 設計判断
+1. **トップレベルコレクション採用**
+   - サブコレクションではなくトップレベル
+   - 理由: クエリの柔軟性、スケーラビリティ
+   - userId フィールドでフィルタリング
+
+2. **recordId の命名規則**
+   - format: `${userId}_${timestamp}`
+   - 利点: 一意性保証、ユーザー識別容易
+
+3. **summaryId の命名規則**
+   - format: `${userId}_${YYYY-MM-DD}`
+   - 利点: 日付ベースの一意性、クエリ最適化
+
+### オフライン対応（✅ 実装完了 - 2025-11-30）
+
+#### IndexedDBアーキテクチャ
+**lib/indexeddb/** - 完全なオフラインファースト実装
+
+1. **データベーススキーマ（db.ts）**
+   - 4つのオブジェクトストア: records, summaries, settings, syncQueue
+   - インデックス設計: userId, timestamp, date, type
+   - ヘルパー関数: withStore（トランザクション管理）、withCursor（カーソルクエリ）
+
+2. **CRUD操作**
+   - records.ts: 喫煙記録のCRUD、日付・ユーザー・タイプでのクエリ
+   - summaries.ts: 日次サマリーのCRUD、統計集計（aggregateSummaries）
+   - settings.ts: ユーザー設定のCRUD、デフォルト設定生成
+
+3. **同期キュー（sync.ts）**
+   - オフライン時の変更をキューに保存
+   - リトライメカニズム（最大3回）
+   - 重複排除（deduplicateSyncQueue）
+   - エラートラッキング
+
+4. **統合データレイヤー（index.ts）**
+   - オフラインファースト: すべての書き込みはまずIndexedDBへ
+   - 自動同期: オンライン時はFirestoreへ即座に同期
+   - バックグラウンド同期: オンライン復帰時の自動処理（setupBackgroundSync）
+   - 同期状態管理: hasPendingSync, processSyncQueue
+
+#### Firestore統合（✅ 実装完了）
+**lib/firebase/firestore.ts** - Firestoreとの統合
+
+1. **Collections**
+   - records: 喫煙記録
+   - summaries: 日次サマリー
+   - settings: ユーザー設定
+
+2. **CRUD操作**
+   - 各コレクションのsave/get/update/delete
+   - タイムスタンプ変換（Firestore Timestamp ↔ number）
+   - クエリ最適化（where, orderBy, limit）
+
+#### データフロー
+```
+ユーザー操作
+    ↓
+useRecords hook (hooks/useRecords.ts)
+    ↓
+lib/indexeddb/index.ts (オフラインファースト)
+    ├→ IndexedDB保存（即座）
+    └→ Firestore同期（オンライン時）または同期キュー追加（オフライン時）
+         ↓
+         オンライン復帰時: setupBackgroundSync() → processSyncQueue()
+```
+
+#### 設計判断
+1. **なぜIndexedDBファーストか**
+   - PWAでのオフライン動作が最優先
+   - IndexedDBは同期的にアクセス可能（Firestoreはネットワーク依存）
+   - ユーザー体験の一貫性（オン/オフラインで同じ挙動）
+
+2. **同期キューの重要性**
+   - オフライン時の変更を失わない
+   - 重複排除で無駄な同期を防ぐ
+   - リトライで一時的なネットワークエラーに対応
+
+3. **Timestamp型の統一**
+   - IndexedDB: number型（Unix timestamp in milliseconds）
+   - Firestore: Timestamp型
+   - 変換はfirestore.tsで一元管理
 
 ## AI統合（Gemini 2.0 Flash）
 

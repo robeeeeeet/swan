@@ -2,8 +2,8 @@
 
 ## プロジェクト概要
 - **プロジェクト名**: Swan（スワン）- 禁煙・減煙支援PWA
-- **現在のステータス**: Phase 1 基本機能実装完了
-- **開発フェーズ**: Phase 2に移行準備中
+- **現在のステータス**: Phase 1 データ永続化層完了 ✅
+- **開発フェーズ**: Phase 1 後半（SOS機能、履歴、設定ページ実装予定）
 
 ## 最新の実装状況
 
@@ -101,13 +101,23 @@ swan/
 │       ├── GoalHeader.tsx       ✅
 │       └── RandomTip.tsx        ✅
 ├── hooks/
-│   └── useAuth.ts               ✅
+│   ├── useAuth.ts               ✅
+│   └── useRecords.ts            ✅ NEW!
 ├── lib/
 │   ├── firebase/
 │   │   ├── config.ts            ✅
-│   │   └── auth.ts              ✅
+│   │   ├── auth.ts              ✅
+│   │   └── firestore.ts         ✅ NEW!
+│   ├── indexeddb/               ✅ NEW! (完全実装)
+│   │   ├── db.ts                ✅
+│   │   ├── records.ts           ✅
+│   │   ├── summaries.ts         ✅
+│   │   ├── settings.ts          ✅
+│   │   ├── sync.ts              ✅
+│   │   └── index.ts             ✅
+│   ├── utils/                   ✅ NEW!
+│   │   └── summary.ts           ✅
 │   ├── ai/                      📁 (ディレクトリのみ)
-│   ├── indexeddb/               📁 (ディレクトリのみ)
 │   └── push/                    📁 (ディレクトリのみ)
 ├── store/
 │   ├── userStore.ts             ✅
@@ -158,6 +168,31 @@ swan/
    - 我慢成功時: 励ましメッセージ（6種類からランダム）
    - 喫煙記録時: ニュートラルメッセージ
 
+#### データ永続化機能（NEW! 2025-11-30）
+
+1. **オフラインファースト設計**
+   - すべてのデータ操作はまずIndexedDBに保存
+   - オンライン時は自動的にFirestoreに同期
+   - オフライン時は同期キューに追加され、オンライン復帰時に自動同期
+
+2. **IndexedDB構造**
+   - **records** - 喫煙記録（smoked, craved, resisted）
+   - **summaries** - 日次サマリー（統計、節約額、タグ分析）
+   - **settings** - ユーザー設定（通知、目標、アプリ設定）
+   - **syncQueue** - オフライン同期キュー
+
+3. **同期機能**
+   - バックグラウンド自動同期（オンライン復帰時）
+   - 同期キューの重複排除
+   - リトライメカニズム（最大3回）
+   - エラートラッキング
+
+4. **統計計算**
+   - 日次サマリー自動集計
+   - 節約金額・時間計算
+   - 抵抗成功率計算
+   - 目標達成状況判定
+
 #### 認証フロー
 
 1. **トップページ（/）**
@@ -174,34 +209,68 @@ swan/
    - 未認証時は `/auth/signin` にリダイレクト
    - ローディング状態表示
 
+### ✅ Phase 1 完了項目（続き）
+
+#### 9. データ永続化層（2025-11-30 NEW!）
+- **lib/indexeddb/db.ts** - IndexedDBスキーマと初期化
+  - 4つのオブジェクトストア: records, summaries, settings, syncQueue
+  - インデックス設計（userId, timestamp, date, type）
+  - ヘルパー関数（withStore, withCursor）
+- **lib/indexeddb/records.ts** - 喫煙記録CRUD操作
+  - saveRecord, getRecord, getRecordsByUser, getRecordsByDate
+  - updateRecord, deleteRecord, deleteAllRecords
+  - countRecords, getLatestRecord
+- **lib/indexeddb/summaries.ts** - 日次サマリーCRUD操作
+  - saveSummary, getSummary, getSummaryByDate
+  - updateSummary, deleteSummary
+  - aggregateSummaries（統計集計）
+- **lib/indexeddb/settings.ts** - ユーザー設定CRUD操作
+  - saveSettings, getSettings, updateSettings
+  - createDefaultSettings, initializeSettings
+- **lib/indexeddb/sync.ts** - オフライン同期キュー管理
+  - addToSyncQueue, getPendingSyncItems
+  - removeSyncItem, incrementRetry
+  - deduplicateSyncQueue, hasPendingSync
+- **lib/indexeddb/index.ts** - 統合データレイヤー（オフラインファースト）
+  - saveRecord, updateRecord, deleteRecord（自動同期）
+  - processSyncQueue, syncFromFirestore
+  - setupBackgroundSync（自動バックグラウンド同期）
+
+#### 10. Firestore統合（2025-11-30 NEW!）
+- **lib/firebase/firestore.ts** - Firestore CRUD操作
+  - Records: saveRecordToFirestore, getRecordsFromFirestore, updateRecordInFirestore
+  - Summaries: saveSummaryToFirestore, getSummariesFromFirestore
+  - Settings: saveSettingsToFirestore, getSettingsFromFirestore
+
+#### 11. ユーティリティ関数（2025-11-30 NEW!）
+- **lib/utils/summary.ts** - サマリー計算とフォーマット
+  - calculateDailySummary（日次統計集計）
+  - formatMoney, formatMinutes, formatLifeRegained
+  - calculateResistanceRate, checkGoalProgress
+
+#### 12. データ統合フック（2025-11-30 NEW!）
+- **hooks/useRecords.ts** - 記録操作の統合フック
+  - createRecord（IndexedDB + Firestore + Zustand統合）
+  - updateRecord, deleteRecord
+  - オフライン/オンライン状態管理
+  - 同期ステータス監視
+
 ### 🚧 未実装機能（Phase 1 残タスク）
 
 #### 高優先度
-1. **IndexedDB統合**
-   - `lib/indexeddb/db.ts` - データベーススキーマ
-   - `lib/indexeddb/records.ts` - レコード操作
-   - `lib/indexeddb/sync.ts` - 同期キュー管理
 
-2. **Firestore CRUD操作**
-   - `lib/firebase/firestore.ts` - records, settings, summaries CRUD
-   - オフライン同期ロジック
-
-3. **Daily Summary更新**
-   - 記録追加時にサマリー自動更新
-   - 日付変更時の処理
-
-4. **SOS機能（D群）**
+1. **SOS機能（D群）**
    - `app/sos/timer/page.tsx` - 3分タイマー
    - `app/sos/breathing/page.tsx` - 深呼吸モード
    - `components/sos/Timer.tsx`, `BreathingCircle.tsx`
 
 #### 中優先度
-5. **履歴ページ**
+2. **履歴ページ**
    - `app/(main)/history/page.tsx`
    - 日別記録一覧
    - 統計グラフ
 
-6. **設定ページ**
+3. **設定ページ**
    - `app/(main)/settings/page.tsx`
    - 目標設定
    - 通知設定
@@ -251,15 +320,15 @@ swan/
    - Authentication, Firestore, FCM 設定
    - `.env.local` ファイル作成（`docs/setup-guide.md` 参照）
 
-2. **IndexedDB実装**
-   - スキーマ設計
-   - CRUD操作
-   - 同期キュー
+2. **SOS機能実装**
+   - 3分タイマーページ
+   - 深呼吸ガイドページ
+   - AI励ましメッセージ統合
 
-3. **Firestore CRUD実装**
-   - records コレクション
-   - settings コレクション
-   - summaries コレクション
+3. **履歴ページ実装**
+   - 日別記録一覧
+   - 統計グラフ
+   - フィルタリング機能
 
 ### 開発コマンド
 ```bash

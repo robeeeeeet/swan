@@ -39,42 +39,42 @@ export type SituationTag =
 
 /**
  * Smoking/craving record
+ * Note: timestamp can be number (IndexedDB) or Timestamp (Firestore)
  */
 export interface SmokingRecord {
   id: string;
   userId: string;
   type: RecordType;
-  timestamp: Timestamp;
+  timestamp: number; // Unix timestamp in milliseconds
+  date: string; // YYYY-MM-DD format for indexing
   tags: SituationTag[];
   note?: string;
-
-  // Metadata
-  createdAt: Timestamp;
-  syncedToCloud: boolean;
 }
 
 /**
  * Daily summary statistics
  */
 export interface DailySummary {
+  id: string; // Format: userId_YYYY-MM-DD
   date: string; // YYYY-MM-DD format
   userId: string;
 
   // Counts
-  smokedCount: number;
-  cravedCount: number;
-  resistedCount: number;
+  totalSmoked: number;
+  totalCraved: number;
+  totalResisted: number;
 
-  // Goal tracking
-  dailyGoal: number;
-  achieved: boolean;
+  // Savings
+  moneySaved: number; // Amount in yen
+  minutesSaved: number; // Life regained in minutes
 
   // Tag analysis
-  topTags: SituationTag[];
+  mostCommonTags: SituationTag[];
 
-  // Metadata
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  // Goal tracking
+  dailyTarget: number;
+  goalMet: boolean;
+  resistanceRate: number; // Percentage (0-100)
 }
 
 // ============================================================================
@@ -89,53 +89,42 @@ export interface NotificationSettings {
 
   // Notification types
   morningBriefing: boolean;
-  magicTimeAlert: boolean;
-  stepDownProposal: boolean;
-  aliveCheck: boolean;
+  dangerousTimeAlerts: boolean;
+  stepDownSuggestions: boolean;
+  survivalCheck: boolean;
 
   // Privacy settings
-  detailedMessages: boolean; // true: 詳細メッセージ, false: 汎用メッセージ
+  privacyMode: boolean; // true: 汎用メッセージ, false: 詳細メッセージ
 
   // Timing preferences
-  morningBriefingTime: string; // HH:MM format (e.g., "07:00")
-  quietHoursStart?: string; // HH:MM format
-  quietHoursEnd?: string; // HH:MM format
+  quietHoursStart: string; // HH:MM format (e.g., "22:00")
+  quietHoursEnd: string; // HH:MM format (e.g., "08:00")
 }
 
 /**
  * User goals and preferences
  */
 export interface GoalSettings {
-  // Daily cigarette goals
-  dailyGoal: number;
-  weeklyGoal?: number;
+  // Daily cigarette target
+  dailyTarget: number;
 
   // Step-down preferences
-  autoAdjustGoal: boolean; // Automatically adjust goal based on AI suggestions
-  minimumGoal: number; // Don't suggest goals below this number
-
-  // Starting baseline
-  initialDailyCount: number;
-  baselineSetAt: Timestamp;
+  stepDownEnabled: boolean; // Automatically adjust goal based on AI suggestions
+  stepDownRate: number; // Reduction rate (e.g., 0.9 = reduce by 10%)
 }
 
 /**
  * App settings
  */
 export interface AppSettings {
-  // Onboarding
-  onboardingCompleted: boolean;
-  installGuideShown: boolean;
-
-  // Features
-  sosTimerDuration: number; // seconds (default: 180)
-  breathingCycles: number; // number of breathing cycles (default: 3)
-
   // Display
   theme: 'light' | 'dark' | 'system';
+  language: 'ja' | 'en';
 
-  // Privacy
-  localDataOnly: boolean; // true: IndexedDB only, false: sync with Firestore
+  // Calculation settings
+  cigarettePrice: number; // Price per pack in yen
+  cigarettesPerPack: number; // Default: 20
+  minutesPerCigarette: number; // Average smoking time (default: 7)
 }
 
 /**
@@ -146,10 +135,6 @@ export interface UserSettings {
   notifications: NotificationSettings;
   goals: GoalSettings;
   app: AppSettings;
-
-  // Metadata
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
 }
 
 // ============================================================================

@@ -77,35 +77,30 @@ export const useSettingsStore = create<SettingsState>()(
       setLoading: (isLoading) => set({ isLoading }),
 
       getDefaultSettings: (userId: string): UserSettings => {
-        const now = Timestamp.now();
         return {
           userId,
           notifications: {
             enabled: false,
             morningBriefing: true,
-            magicTimeAlert: true,
-            stepDownProposal: true,
-            aliveCheck: true,
-            detailedMessages: false,
-            morningBriefingTime: '07:00',
+            dangerousTimeAlerts: true,
+            stepDownSuggestions: true,
+            survivalCheck: true,
+            privacyMode: false,
+            quietHoursStart: '22:00',
+            quietHoursEnd: '08:00',
           },
           goals: {
-            dailyGoal: 20,
-            autoAdjustGoal: true,
-            minimumGoal: 1,
-            initialDailyCount: 20,
-            baselineSetAt: now,
+            dailyTarget: 20,
+            stepDownEnabled: true,
+            stepDownRate: 0.9,
           },
           app: {
-            onboardingCompleted: false,
-            installGuideShown: false,
-            sosTimerDuration: 180,
-            breathingCycles: 3,
             theme: 'system',
-            localDataOnly: false,
+            language: 'ja',
+            cigarettePrice: 600,
+            cigarettesPerPack: 20,
+            minutesPerCigarette: 7,
           },
-          createdAt: now,
-          updatedAt: now,
         };
       },
     }),

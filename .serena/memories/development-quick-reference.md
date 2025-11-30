@@ -169,6 +169,74 @@ export function useOnlineStatus() {
 }
 ```
 
+## データ永続化パターン（NEW! 2025-11-30）
+
+### IndexedDB + Firestore統合使用例
+
+#### 記録の作成（オフラインファースト）
+```typescript
+import { useRecords } from '@/hooks/useRecords';
+
+function RecordButton() {
+  const { createRecord, isLoading } = useRecords();
+
+  const handleClick = async () => {
+    // 自動的にIndexedDB保存 + Firestore同期
+    await createRecord('resisted', ['stress', 'habit']);
+  };
+
+  return <button onClick={handleClick}>我慢できた</button>;
+}
+```
+
+#### IndexedDB直接操作（低レベルAPI）
+```typescript
+import { saveRecord, getRecordsByDate } from '@/lib/indexeddb';
+
+// レコード保存
+const record: SmokingRecord = {
+  id: `${userId}_${Date.now()}`,
+  userId: 'user123',
+  type: 'smoked',
+  timestamp: Date.now(),
+  date: '2025-11-30',
+  tags: ['after_meal'],
+};
+await saveRecord(record);
+
+// 日付でクエリ
+const todayRecords = await getRecordsByDate('user123', '2025-11-30');
+```
+
+#### サマリー計算
+```typescript
+import { calculateDailySummary, formatMoney } from '@/lib/utils/summary';
+
+const summary = calculateDailySummary(
+  userId,
+  '2025-11-30',
+  records,
+  600,  // タバコ価格（円）
+  20,   // 本数/パック
+  7,    // 平均喫煙時間（分）
+  20    // 1日の目標本数
+);
+
+console.log(formatMoney(summary.moneySaved)); // "¥210"
+```
+
+#### 同期状態の監視
+```typescript
+import { hasPendingSync, processSyncQueue } from '@/lib/indexeddb';
+
+// 未同期データの確認
+const isPending = await hasPendingSync();
+
+// 手動同期トリガー
+const result = await processSyncQueue();
+console.log(`${result.successful}/${result.total} 同期完了`);
+```
+
 ## Firebase初期化パターン
 
 ### lib/firebase/config.ts
@@ -248,16 +316,26 @@ npm run build 2>&1 | tee build.log
 - [x] TypeScript型定義
 - [x] 定数ファイル（tags, messages）
 
-### Week 2（進行中）
-- [ ] 喫煙記録API（POST /api/smoke-records）
-- [x] 「吸った」ボタン機能（UI実装済み）
-- [x] タグセレクター（UI実装済み）
-- [x] 「我慢できた」ボタン機能（UI実装済み）
+### Week 2 ✅ 完了（2025-11-30）
+- [x] 「吸った」ボタン機能（完全実装）
+- [x] タグセレクター（完全実装）
+- [x] 「我慢できた」ボタン機能（完全実装）
+- [x] 祝福アニメーション（Celebration.tsx）
+- [x] IndexedDB統合（完全実装）
+  - db.ts, records.ts, summaries.ts, settings.ts, sync.ts, index.ts
+- [x] Firestore CRUD操作（完全実装）
+  - lib/firebase/firestore.ts
+- [x] オフライン同期ロジック（完全実装）
+  - 同期キュー、バックグラウンド同期、リトライ機能
+- [x] データ統合フック（hooks/useRecords.ts）
+- [x] サマリー計算ユーティリティ（lib/utils/summary.ts）
+
+### Week 3-4（次のタスク）
 - [ ] 3分タイマー（SOS）
 - [ ] 深呼吸アニメーション
-- [x] 祝福アニメーション（Celebration.tsx）
-- [ ] IndexedDB統合
-- [ ] Firestore CRUD操作
+- [ ] 履歴ページ（日別記録一覧）
+- [ ] 設定ページ（目標設定、通知設定）
+- [ ] AI励ましメッセージ統合
 
 ## 参考リンク
 

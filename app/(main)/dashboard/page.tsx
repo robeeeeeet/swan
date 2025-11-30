@@ -1,29 +1,36 @@
 'use client';
 
-import { useState } from 'react';
-import { useRecordsStore } from '@/store/recordsStore';
+import { useState, useEffect } from 'react';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useAuth } from '@/hooks/useAuth';
+import { useRecords } from '@/hooks/useRecords';
 import GoalHeader from '@/components/dashboard/GoalHeader';
 import RecordButton from '@/components/dashboard/RecordButton';
 import RandomTip from '@/components/dashboard/RandomTip';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
-import { RecordType, SituationTag, SmokingRecord } from '@/types';
-import { Timestamp } from 'firebase/firestore';
+import { RecordType, SituationTag } from '@/types';
 import { SITUATION_TAGS, getTagLabel, getTagEmoji } from '@/constants/tags';
 import { getRandomMessage, RESISTANCE_MESSAGES, NEUTRAL_MESSAGES } from '@/constants/messages';
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { todayRecords, getTodayCount, addRecord } = useRecordsStore();
   const { settings } = useSettingsStore();
+  const {
+    todayRecords,
+    getTodayCount,
+    createRecord,
+    isLoading,
+    syncPending,
+    isOnline,
+  } = useRecords();
 
   // Modal states
   const [showTagModal, setShowTagModal] = useState(false);
   const [pendingRecordType, setPendingRecordType] = useState<RecordType | null>(null);
   const [selectedTags, setSelectedTags] = useState<SituationTag[]>([]);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get counts
   const smokedCount = getTodayCount('smoked');
@@ -31,7 +38,17 @@ export default function DashboardPage() {
   const resistedCount = getTodayCount('resisted');
 
   // Get daily goal
-  const dailyGoal = settings?.goals.dailyGoal ?? 20;
+  const dailyGoal = settings?.goals.dailyTarget ?? 20;
+
+  // Auto-hide feedback message
+  useEffect(() => {
+    if (feedbackMessage) {
+      const timer = setTimeout(() => {
+        setFeedbackMessage(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [feedbackMessage]);
 
   // Handle record button click
   const handleRecordClick = (type: RecordType) => {
@@ -55,42 +72,49 @@ export default function DashboardPage() {
   };
 
   // Submit record with tags
-  const submitRecord = () => {
-    if (!user || !pendingRecordType) return;
+  const submitRecord = async () => {
+    if (!user || !pendingRecordType || isSubmitting) return;
 
-    // Create record
-    const record: SmokingRecord = {
-      id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      userId: user.uid,
-      type: pendingRecordType,
-      timestamp: Timestamp.now(),
-      tags: selectedTags,
-      createdAt: Timestamp.now(),
-      syncedToCloud: false, // Will be synced later
-    };
+    setIsSubmitting(true);
 
-    // Add to store
-    addRecord(record);
+    try {
+      // Create record (saves to IndexedDB and syncs to Firestore)
+      await createRecord(pendingRecordType, selectedTags);
 
-    // Show feedback message
-    if (pendingRecordType === 'resisted') {
-      setFeedbackMessage(getRandomMessage(RESISTANCE_MESSAGES));
-    } else if (pendingRecordType === 'smoked') {
-      setFeedbackMessage(getRandomMessage(NEUTRAL_MESSAGES));
+      // Show feedback message
+      if (pendingRecordType === 'resisted') {
+        setFeedbackMessage(getRandomMessage(RESISTANCE_MESSAGES));
+      } else if (pendingRecordType === 'smoked') {
+        setFeedbackMessage(getRandomMessage(NEUTRAL_MESSAGES));
+      }
+
+      // Close modal
+      setShowTagModal(false);
+      setPendingRecordType(null);
+      setSelectedTags([]);
+    } catch (error) {
+      console.error('Failed to create record:', error);
+      setFeedbackMessage('記録の保存に失敗しました');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Close modal
-    setShowTagModal(false);
-    setPendingRecordType(null);
-    setSelectedTags([]);
-
-    // TODO: Sync to Firebase/IndexedDB
-    // TODO: Update daily summary
   };
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 pb-20">
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        {/* Offline/Sync Status */}
+        {!isOnline && (
+          <div className="bg-warning/10 border border-warning text-warning-dark dark:text-warning px-4 py-2 rounded-lg text-sm text-center">
+            オフライン - データは後で同期されます
+          </div>
+        )}
+        {syncPending && isOnline && (
+          <div className="bg-primary/10 border border-primary text-primary-dark dark:text-primary px-4 py-2 rounded-lg text-sm text-center">
+            同期中...
+          </div>
+        )}
+
         {/* Goal Header */}
         <GoalHeader dailyGoal={dailyGoal} smokedToday={smokedCount} />
 
@@ -210,8 +234,9 @@ export default function DashboardPage() {
               variant="primary"
               fullWidth
               onClick={submitRecord}
+              disabled={isSubmitting}
             >
-              記録する
+              {isSubmitting ? '記録中...' : '記録する'}
             </Button>
           </div>
         </div>

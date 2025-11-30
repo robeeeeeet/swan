@@ -131,7 +131,7 @@ swan/
 │       ├── BottomNav.tsx
 │       └── SafeArea.tsx
 ├── hooks/                  # カスタムフック
-│   ├── useSmokeRecord.ts
+│   ├── useRecords.ts       ✅ 実装済み（IndexedDB+Firestore統合）
 │   ├── useCopingRecord.ts
 │   ├── useGoal.ts
 │   ├── useStatistics.ts
@@ -141,13 +141,16 @@ swan/
 │   └── useServiceWorker.ts
 ├── lib/                    # ユーティリティ・サービス
 │   ├── firebase/
-│   │   ├── config.ts
-│   │   ├── auth.ts
-│   │   └── firestore.ts
-│   ├── indexeddb/          # IndexedDB（オフライン用）
-│   │   ├── schema.ts
-│   │   ├── smokeRecordRepository.ts
-│   │   └── syncQueue.ts
+│   │   ├── config.ts       ✅ 実装済み
+│   │   ├── auth.ts         ✅ 実装済み
+│   │   └── firestore.ts    ✅ 実装済み（CRUD操作フル実装）
+│   ├── indexeddb/          # IndexedDB（オフライン用）✅ 実装済み
+│   │   ├── db.ts           ✅ スキーマ定義・DB初期化
+│   │   ├── records.ts      ✅ 喫煙記録CRUD
+│   │   ├── summaries.ts    ✅ サマリーCRUD
+│   │   ├── settings.ts     ✅ 設定CRUD
+│   │   ├── sync.ts         ✅ 同期キュー管理
+│   │   └── index.ts        ✅ 統合データレイヤー（offline-first）
 │   ├── push/
 │   │   ├── config.ts
 │   │   └── client.ts
@@ -155,9 +158,8 @@ swan/
 │   │   ├── gemini.ts
 │   │   └── prompts.ts
 │   └── utils/
-│       ├── date.ts
-│       ├── format.ts
-│       └── calculation.ts
+│       ├── date.ts         ✅ 実装済み
+│       └── summary.ts      ✅ 実装済み（統計計算・フォーマット）
 ├── store/                  # Zustand ストア
 │   ├── useUserStore.ts
 │   ├── useRecordStore.ts
@@ -277,36 +279,78 @@ interface DailyStats {
 }
 ```
 
-### 4.3 IndexedDB スキーマ（オフライン用）
+### 4.3 IndexedDB スキーマ（オフライン用）✅ 実装完了（2025-11-30）
+
+**実装済みスキーマ:**
 
 ```typescript
-interface SwanDBSchema {
-  'smoke-records': {
-    key: string;
-    value: {
-      id: string;
-      timestamp: number;
-      type: 'smoked' | 'resisted';
-      tag?: string;
-      synced: boolean;
-    };
-    indexes: {
-      'by-timestamp': number;
-      'by-synced': boolean;
-    };
-  };
-  'sync-queue': {
-    key: string;
-    value: {
-      id: string;
-      type: 'CREATE' | 'UPDATE' | 'DELETE';
-      entity: string;
-      data: any;
-      timestamp: number;
-    };
-  };
+// Database: SwanDB (version 1)
+// Location: lib/indexeddb/db.ts
+
+export const STORES = {
+  RECORDS: 'records',      // 喫煙記録（SmokingRecord型）
+  SUMMARIES: 'summaries',  // 日別サマリー（DailySummary型）
+  SETTINGS: 'settings',    // ユーザー設定（UserSettings型）
+  SYNC_QUEUE: 'syncQueue', // オフライン同期キュー（SyncQueueItem型）
+} as const;
+
+// records オブジェクトストア
+interface SmokingRecord {
+  id: string;              // キー: userId_timestamp
+  userId: string;
+  type: 'smoked' | 'craved' | 'resisted';
+  timestamp: number;       // Unixタイムスタンプ（ミリ秒）
+  date: string;            // YYYY-MM-DD形式
+  tags: SituationTag[];    // 状況タグ配列
 }
+// Indexes: userId, timestamp, date, type
+
+// summaries オブジェクトストア
+interface DailySummary {
+  id: string;              // キー: userId_YYYY-MM-DD
+  userId: string;
+  date: string;
+  totalSmoked: number;
+  totalCraved: number;
+  totalResisted: number;
+  moneySaved: number;
+  minutesSaved: number;
+  mostCommonTags: SituationTag[];
+  dailyTarget: number;
+  goalMet: boolean;
+  resistanceRate: number;
+}
+// Indexes: userId, date
+
+// settings オブジェクトストア
+interface UserSettings {
+  userId: string;          // キー
+  notifications: NotificationSettings;
+  goals: GoalSettings;
+  app: AppSettings;
+}
+// Indexes: なし（userIdがキー）
+
+// syncQueue オブジェクトストア
+interface SyncQueueItem {
+  id: string;              // キー: storeName_operation_documentId_timestamp
+  storeName: string;       // 対象ストア名
+  operation: 'create' | 'update' | 'delete';
+  documentId: string;      // Firestore document ID
+  data?: any;              // 同期するデータ（deleteは不要）
+  timestamp: number;       // キュー追加時刻
+  retries: number;         // リトライ回数（最大3回）
+  lastError?: string;      // 最後のエラーメッセージ
+}
+// Indexes: timestamp, storeName
 ```
+
+**実装済み機能:**
+- ✅ オフライン優先アーキテクチャ（IndexedDB → Firestore）
+- ✅ 自動同期キュー（オンライン復帰時に処理）
+- ✅ 重複排除機能（同一文書の複数操作を最新のみに集約）
+- ✅ リトライ機構（最大3回、失敗時はエラー記録）
+- ✅ バックグラウンド同期（window.onlineイベントで自動実行）
 
 ---
 
@@ -347,24 +391,39 @@ interface SwanDBSchema {
 | 基本UIコンポーネント（Button, Card, Modal） | コンポーネントライブラリ |
 | ダッシュボードページ実装（A-01, A-02, B-01） | ホーム画面 |
 
-#### Week 2: 記録機能 + SOS機能
+#### Week 2: 記録機能 + データ永続化層 ✅ 完了（2025-11-30）
 
-| タスク | 成果物 |
-|--------|--------|
-| 喫煙記録API実装 | 記録API |
-| 「吸った」ボタン機能実装（A-01） | カウンター機能 |
-| タグ選択UI実装（A-04） | タグセレクター |
-| 「我慢できた」ボタン機能実装（A-03） | 成功記録機能 |
-| SOS画面実装（D-01: 3分タイマー） | タイマー画面 |
-| 深呼吸アニメーション実装（D-02） | 呼吸ガイド画面 |
-| 祝福アニメーション実装 | Celebration コンポーネント |
+| タスク | 成果物 | 状態 |
+|--------|--------|------|
+| IndexedDB スキーマ設計・実装 | `lib/indexeddb/db.ts` | ✅ 完了 |
+| IndexedDB CRUD操作実装 | `lib/indexeddb/{records,summaries,settings}.ts` | ✅ 完了 |
+| オフライン同期キュー実装 | `lib/indexeddb/sync.ts` | ✅ 完了 |
+| Firestore CRUD操作実装 | `lib/firebase/firestore.ts` | ✅ 完了 |
+| 統合データレイヤー実装 | `lib/indexeddb/index.ts` (offline-first) | ✅ 完了 |
+| サマリー計算ユーティリティ | `lib/utils/summary.ts` | ✅ 完了 |
+| useRecords フック実装 | `hooks/useRecords.ts` | ✅ 完了 |
+| ダッシュボード統合・動作確認 | `app/(main)/dashboard/page.tsx` | ✅ 完了 |
+| 「吸った」ボタン機能実装（A-01） | カウンター機能 | ✅ 完了 |
+| タグ選択UI実装（A-04） | タグセレクター | ✅ 完了 |
+| 「我慢できた」ボタン機能実装（A-03） | 成功記録機能 | ✅ 完了 |
 
-**Phase 1 完了時の機能:**
-- ユーザー認証
-- 喫煙記録（「吸った」ボタン + タグ）
-- SOS機能（3分タイマー、深呼吸）
-- 我慢成功記録（祝福アニメーション付き）
-- 今日のカウント表示
+#### Week 3: SOS機能（次のタスク）
+
+| タスク | 成果物 | 状態 |
+|--------|--------|------|
+| SOS画面実装（D-01: 3分タイマー） | タイマー画面 | ⏳ 未実装 |
+| 深呼吸アニメーション実装（D-02） | 呼吸ガイド画面 | ⏳ 未実装 |
+| 祝福アニメーション実装 | Celebration コンポーネント | ⏳ 未実装 |
+
+**Phase 1 現在の完了機能:**
+- ✅ ユーザー認証（匿名認証）
+- ✅ 喫煙記録（「吸った」ボタン + タグ）
+- ✅ 我慢成功記録（「我慢できた」ボタン + タグ）
+- ✅ 今日のカウント表示
+- ✅ オフライン対応（IndexedDB + 自動同期）
+- ✅ データ永続化層（Firestore統合）
+- ⏳ SOS機能（3分タイマー、深呼吸）- 未実装
+- ⏳ 祝福アニメーション - 未実装
 
 ---
 
@@ -489,8 +548,70 @@ CRON_SECRET=
 
 ---
 
-## 10. 改訂履歴
+## 10. 実装進捗レポート
+
+### 2025-11-30: データ永続化層完了 ✅
+
+**実装内容:**
+1. **IndexedDB スキーマ実装** (`lib/indexeddb/db.ts`)
+   - SwanDB データベース（バージョン1）
+   - 4つのオブジェクトストア（records, summaries, settings, syncQueue）
+   - 適切なインデックス設定
+
+2. **IndexedDB CRUD操作**
+   - `lib/indexeddb/records.ts` - 喫煙記録の保存・取得・更新・削除
+   - `lib/indexeddb/summaries.ts` - 日別サマリーの管理・集計
+   - `lib/indexeddb/settings.ts` - ユーザー設定の永続化
+
+3. **オフライン同期機構** (`lib/indexeddb/sync.ts`)
+   - 同期キューの管理（追加・取得・削除）
+   - リトライ機構（最大3回）
+   - 重複排除機能（同一文書の複数操作を最新に集約）
+
+4. **Firestore統合** (`lib/firebase/firestore.ts`)
+   - 3つのコレクション（records, summaries, settings）
+   - 完全なCRUD操作実装
+   - Timestamp変換処理
+
+5. **統合データレイヤー** (`lib/indexeddb/index.ts`)
+   - Offline-firstアーキテクチャ
+   - 自動同期（オンライン時）
+   - バックグラウンド同期（reconnection時）
+
+6. **統計計算ユーティリティ** (`lib/utils/summary.ts`)
+   - 日別サマリー計算
+   - 金額・時間フォーマット
+   - 抵抗率計算
+   - 目標進捗チェック
+
+7. **React統合フック** (`hooks/useRecords.ts`)
+   - IndexedDB + Firestore + Zustand統合
+   - createRecord, updateRecord, deleteRecord API
+   - 同期状態管理
+
+8. **ダッシュボード統合** (`app/(main)/dashboard/page.tsx`)
+   - useRecordsフックの統合
+   - オフライン/同期状態表示
+   - エラーハンドリング
+
+**ブラウザテスト結果:**
+- ✅ 記録作成が正常に動作
+- ✅ IndexedDBへの保存確認
+- ✅ Firestoreへの同期確認
+- ✅ タグ選択機能動作
+- ✅ UI更新が即座に反映
+
+**次のタスク:**
+- SOS機能（3分タイマー、深呼吸アニメーション）
+- 祝福アニメーション
+- 履歴ページ
+- 設定ページ
+
+---
+
+## 11. 改訂履歴
 
 | バージョン | 日付 | 変更内容 |
 |-----------|------|---------|
+| 1.1.0 | 2025-11-30 | データ永続化層実装完了、実装進捗レポート追加 |
 | 1.0.0 | 2025-11-30 | 初版作成 |
