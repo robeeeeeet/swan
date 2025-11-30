@@ -9,6 +9,7 @@ import RecordButton from '@/components/dashboard/RecordButton';
 import RandomTip from '@/components/dashboard/RandomTip';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import { SOSModal } from '@/components/sos/SOSModal';
 import { RecordType, SituationTag } from '@/types';
 import { SITUATION_TAGS, getTagLabel, getTagEmoji } from '@/constants/tags';
 import { getRandomMessage, RESISTANCE_MESSAGES, NEUTRAL_MESSAGES } from '@/constants/messages';
@@ -26,6 +27,7 @@ export default function DashboardPage() {
   } = useRecords();
 
   // Modal states
+  const [showSOSModal, setShowSOSModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
   const [pendingRecordType, setPendingRecordType] = useState<RecordType | null>(null);
   const [selectedTags, setSelectedTags] = useState<SituationTag[]>([]);
@@ -53,15 +55,20 @@ export default function DashboardPage() {
   // Handle record button click
   const handleRecordClick = (type: RecordType) => {
     if (type === 'craved') {
-      // SOS flow - to be implemented
-      // For now, just show tag modal
+      // Show SOS modal for cravings
       setPendingRecordType(type);
-      setShowTagModal(true);
+      setShowSOSModal(true);
     } else {
-      // Show tag modal for tagging
+      // Show tag modal for other types
       setPendingRecordType(type);
       setShowTagModal(true);
     }
+  };
+
+  // Handle "just record" from SOS modal
+  const handleRecordCraving = () => {
+    setPendingRecordType('craved');
+    setShowTagModal(true);
   };
 
   // Toggle tag selection
@@ -173,6 +180,16 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* SOS Modal */}
+      <SOSModal
+        isOpen={showSOSModal}
+        onClose={() => {
+          setShowSOSModal(false);
+          setPendingRecordType(null);
+        }}
+        onRecordCraving={handleRecordCraving}
+      />
 
       {/* Tag Selection Modal */}
       <Modal

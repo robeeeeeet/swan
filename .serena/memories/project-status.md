@@ -85,7 +85,11 @@ swan/
 │   │   ├── layout.tsx            ✅ 認証ガード
 │   │   └── dashboard/
 │   │       └── page.tsx          ✅ ダッシュボード
-│   ├── sos/                      📁 (ディレクトリのみ - Phase 1後半で実装予定)
+│   ├── sos/                      ✅ SOS機能実装完了
+│   │   ├── timer/
+│   │   │   └── page.tsx         ✅ 3分タイマーページ
+│   │   └── breathing/
+│   │       └── page.tsx         ✅ 深呼吸モードページ
 │   ├── api/                      📁 (ディレクトリのみ)
 │   ├── layout.tsx                ✅ ルートレイアウト
 │   ├── globals.css               ✅ Swanデザインシステム
@@ -95,11 +99,15 @@ swan/
 │   │   ├── Button.tsx           ✅
 │   │   ├── Card.tsx             ✅
 │   │   ├── Modal.tsx            ✅
-│   └── Celebration.tsx      ✅
-└── dashboard/
-│       ├── RecordButton.tsx     ✅
-│       ├── GoalHeader.tsx       ✅
-│       └── RandomTip.tsx        ✅
+│   │   └── Celebration.tsx      ✅
+│   ├── dashboard/
+│   │   ├── RecordButton.tsx     ✅
+│   │   ├── GoalHeader.tsx       ✅
+│   │   └── RandomTip.tsx        ✅
+│   └── sos/
+│       ├── Timer.tsx            ✅ 3分タイマーコンポーネント
+│       ├── BreathingCircle.tsx  ✅ 深呼吸ガイドコンポーネント
+│       └── SOSModal.tsx         ✅ SOSモーダル
 ├── hooks/
 │   ├── useAuth.ts               ✅
 │   └── useRecords.ts            ✅ NEW!
@@ -255,14 +263,34 @@ swan/
   - オフライン/オンライン状態管理
   - 同期ステータス監視
 
+### ✅ SOS機能実装完了（2025-11-30 NEW!）
+
+#### D群：衝動対策・SOS機能
+- **app/sos/timer/page.tsx** - 3分タイマーページ ✅
+  - 円形プログレスバー（SVG）
+  - 分:秒表示（タブular figures）
+  - 開始/一時停止/リセット機能
+  - 完了時の祝福アニメーション
+- **app/sos/breathing/page.tsx** - 深呼吸モードページ ✅
+  - 4フェーズ呼吸ガイド（吸う4秒・止める4秒・吐く6秒・休憩2秒）
+  - アニメーション付き呼吸サークル（スケール変化）
+  - 5サイクル完了で終了
+  - 深呼吸の効果説明
+- **components/sos/Timer.tsx** - タイマーコンポーネント ✅
+  - カスタマイズ可能な時間設定（デフォルト3分）
+  - SVG円形プログレスバー（Teal → Orange グラデーション）
+  - 完了コールバック対応
+- **components/sos/BreathingCircle.tsx** - 呼吸ガイドコンポーネント ✅
+  - 4フェーズ自動遷移
+  - スケールアニメーション（0.6～1.5倍）
+  - フェーズごとのメッセージ表示
+  - プログレスバー付き
+- **components/sos/SOSModal.tsx** - SOSモーダル ✅
+  - ダッシュボードから「吸いたい」ボタンで表示
+  - 3分タイマーまたは深呼吸モードへの誘導
+  - 「記録だけする」オプション
+
 ### 🚧 未実装機能（Phase 1 残タスク）
-
-#### 高優先度
-
-1. **SOS機能（D群）**
-   - `app/sos/timer/page.tsx` - 3分タイマー
-   - `app/sos/breathing/page.tsx` - 深呼吸モード
-   - `components/sos/Timer.tsx`, `BreathingCircle.tsx`
 
 #### 中優先度
 2. **履歴ページ**
