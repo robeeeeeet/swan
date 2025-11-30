@@ -416,6 +416,18 @@ interface SyncQueueItem {
 | 祝福アニメーション実装 | Celebration コンポーネント | ✅ 完了 |
 | SOSモーダル統合 | SOSModal コンポーネント | ✅ 完了 |
 
+#### Week 4: 履歴ページ実装 ✅ 完了（2025-11-30）
+
+| タスク | 成果物 | 状態 |
+|--------|--------|------|
+| useHistory フック実装 | `hooks/useHistory.ts` | ✅ 完了 |
+| 日別サマリーカード実装 | `components/history/HistoryCard.tsx` | ✅ 完了 |
+| 週間統計カード実装 | `components/history/WeekStats.tsx` | ✅ 完了 |
+| 本数推移チャート実装 | `components/history/SimpleBarChart.tsx` | ✅ 完了 |
+| 日別詳細モーダル実装 | `components/history/DayDetailModal.tsx` | ✅ 完了 |
+| 履歴メインページ実装 | `app/(main)/history/page.tsx` | ✅ 完了 |
+| サマリー計算関数拡張 | `formatDate()`, `formatTime()` 追加 | ✅ 完了 |
+
 **Phase 1 現在の完了機能:**
 - ✅ ユーザー認証（匿名認証）
 - ✅ 喫煙記録（「吸った」ボタン + タグ）
@@ -427,6 +439,12 @@ interface SyncQueueItem {
   - 深呼吸ガイド（D-02）
   - SOSモーダル統合
   - 祝福アニメーション
+- ✅ **履歴ページ（2025-11-30 NEW!）**
+  - 期間フィルター（7日間/30日間/全期間）
+  - 週間統計サマリー
+  - 本数推移チャート（直近7日間）
+  - 日別記録カード（タグプレビュー付き）
+  - 詳細モーダル（タグ分析・ヒートマップ・タイムライン）
 - ✅ データ永続化層（Firestore統合）
 
 ---
@@ -444,16 +462,15 @@ interface SyncQueueItem {
 | PWA基本設定（manifest.json, next-pwa） | PWAインストール可能 |
 | iOS インストール誘導UI実装（E-02） | インストールガイド |
 | オフライン対応（IndexedDB同期） | オフライン機能 |
-| カレンダー/履歴表示実装（E-03） | 履歴ページ |
+| ~~カレンダー/履歴表示実装（E-03）~~ | ✅ Phase 1で完了 |
 
 **Phase 2 完了時の機能:**
-- Phase 1 の全機能
+- Phase 1 の全機能（認証、記録、SOS、履歴、データ永続化）
 - 成果可視化（節約金額、取り戻した寿命）
 - ランダムTips
 - 設定画面
 - PWAインストール（iOS含む）
 - オフライン基本対応
-- 履歴閲覧
 
 ---
 

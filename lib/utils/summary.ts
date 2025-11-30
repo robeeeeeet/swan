@@ -77,10 +77,37 @@ export function calculateDailySummary(
  * Formats money as Japanese yen.
  *
  * @param amount - The amount in yen
- * @returns Formatted string (e.g., "¥1,200")
+ * @returns Formatted string (e.g., "1,200")
  */
 export function formatMoney(amount: number): string {
-  return `¥${Math.round(amount).toLocaleString('ja-JP')}`;
+  return Math.round(amount).toLocaleString('ja-JP');
+}
+
+/**
+ * Formats a date string to Japanese format
+ * @param dateStr - Date string in YYYY-MM-DD format
+ * @returns Formatted date (e.g., "11月30日(土)")
+ */
+export function formatDate(dateStr: string): string {
+  const date = new Date(dateStr + 'T00:00:00');
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
+
+  return `${month}月${day}日(${dayOfWeek})`;
+}
+
+/**
+ * Formats a timestamp to time string
+ * @param timestampStr - ISO timestamp string
+ * @returns Formatted time (e.g., "14:30")
+ */
+export function formatTime(timestampStr: string): string {
+  const date = new Date(timestampStr);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  return `${hours}:${minutes}`;
 }
 
 /**

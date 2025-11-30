@@ -104,13 +104,19 @@ swan/
 │   │   ├── RecordButton.tsx     ✅
 │   │   ├── GoalHeader.tsx       ✅
 │   │   └── RandomTip.tsx        ✅
-│   └── sos/
-│       ├── Timer.tsx            ✅ 3分タイマーコンポーネント
-│       ├── BreathingCircle.tsx  ✅ 深呼吸ガイドコンポーネント
-│       └── SOSModal.tsx         ✅ SOSモーダル
+│   ├── sos/
+│   │   ├── Timer.tsx            ✅ 3分タイマーコンポーネント
+│   │   ├── BreathingCircle.tsx  ✅ 深呼吸ガイドコンポーネント
+│   │   └── SOSModal.tsx         ✅ SOSモーダル
+│   └── history/                 ✅ NEW! (2025-11-30)
+│       ├── HistoryCard.tsx      ✅ 日別サマリーカード
+│       ├── WeekStats.tsx        ✅ 週間統計カード
+│       ├── SimpleBarChart.tsx   ✅ 本数推移チャート
+│       └── DayDetailModal.tsx   ✅ 日別詳細モーダル
 ├── hooks/
 │   ├── useAuth.ts               ✅
-│   └── useRecords.ts            ✅ NEW!
+│   ├── useRecords.ts            ✅
+│   └── useHistory.ts            ✅ NEW! (2025-11-30)
 ├── lib/
 │   ├── firebase/
 │   │   ├── config.ts            ✅
@@ -290,15 +296,53 @@ swan/
   - 3分タイマーまたは深呼吸モードへの誘導
   - 「記録だけする」オプション
 
+### ✅ 履歴ページ実装完了（2025-11-30 NEW!）
+
+#### 13. 履歴ページとコンポーネント（2025-11-30 NEW!）
+- **app/(main)/history/page.tsx** - 履歴メインページ ✅
+  - 期間フィルター（7日間/30日間/全期間）
+  - 週間統計サマリー表示
+  - 本数推移チャート（直近7日間）
+  - 日別記録カード一覧
+  - 詳細モーダル表示
+- **components/history/HistoryCard.tsx** - 日別サマリーカード ✅
+  - 日付ヘッダー（和暦形式: 11月30日(日)）
+  - 「今日」バッジ
+  - 成功率バッジ（%表示）
+  - 統計グリッド（吸った・我慢・節約）
+  - タグプレビュー（最大3つ + 残数表示）
+- **components/history/WeekStats.tsx** - 週間統計カード ✅
+  - 期間別統計表示（7日間/30日間/全期間）
+  - 喫煙本数、我慢成功回数、節約金額
+  - 励ましメッセージ表示
+  - グラデーション背景デザイン
+- **components/history/SimpleBarChart.tsx** - 本数推移チャート ✅
+  - 直近7日間の棒グラフ
+  - 今日のバーをハイライト（ティールカラー）
+  - 各バーに本数表示
+  - 日付ラベル（曜日付き）
+- **components/history/DayDetailModal.tsx** - 日別詳細モーダル ✅
+  - 日別サマリー表示
+  - 状況タグ分析（タグ別集計 with emoji + count）
+  - 時間帯別ヒートマップ（24時間 × 濃淡表示）
+  - 記録タイムライン（時刻 + type emoji + tag emoji）
+  - スムーズなモーダル開閉アニメーション
+- **hooks/useHistory.ts** - 履歴データ管理フック ✅
+  - IndexedDBからデータ読み込み
+  - 期間フィルタリング（7days/30days/all）
+  - 日次サマリー自動計算
+  - 週間統計集計
+  - リフレッシュ機能
+
+#### 14. サマリー計算ユーティリティ拡張（2025-11-30 NEW!）
+- **lib/utils/summary.ts** - 追加関数 ✅
+  - `formatDate(dateStr)` - 和暦日付フォーマット（例: 11月30日(日)）
+  - `formatTime(timestampStr)` - 時刻フォーマット（例: 14:30）
+
 ### 🚧 未実装機能（Phase 1 残タスク）
 
 #### 中優先度
-2. **履歴ページ**
-   - `app/(main)/history/page.tsx`
-   - 日別記録一覧
-   - 統計グラフ
-
-3. **設定ページ**
+1. **設定ページ**
    - `app/(main)/settings/page.tsx`
    - 目標設定
    - 通知設定

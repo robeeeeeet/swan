@@ -237,6 +237,34 @@ const result = await processSyncQueue();
 console.log(`${result.successful}/${result.total} 同期完了`);
 ```
 
+#### 履歴データの取得（NEW! 2025-11-30）
+```typescript
+import { useHistory } from '@/hooks/useHistory';
+
+function HistoryPage() {
+  const {
+    records,          // 期間内の全記録
+    summaries,        // 日次サマリー配列
+    weekStats,        // 週間統計
+    isLoading,        // ローディング状態
+    selectedPeriod,   // 選択中の期間（'7days' | '30days' | 'all'）
+    setSelectedPeriod,// 期間変更関数
+    refreshHistory,   // 手動リフレッシュ
+  } = useHistory();
+
+  return (
+    <div>
+      <button onClick={() => setSelectedPeriod('30days')}>
+        30日間表示
+      </button>
+      {summaries.map(summary => (
+        <div key={summary.date}>{summary.totalSmoked}本</div>
+      ))}
+    </div>
+  );
+}
+```
+
 ## Firebase初期化パターン
 
 ### lib/firebase/config.ts
@@ -335,8 +363,13 @@ npm run build 2>&1 | tee build.log
 - [x] 深呼吸アニメーション
 - [x] SOSモーダル統合（ダッシュボード連携）
 
-### Week 4-5（次のタスク）
-- [ ] 履歴ページ（日別記録一覧）
+### Week 4-5 ✅ 履歴ページ完了（2025-11-30）
+- [x] 履歴ページ（日別記録一覧） ✅
+  - 期間フィルター（7日間/30日間/全期間）
+  - 週間統計サマリー
+  - 本数推移チャート
+  - 日別カード一覧
+  - 詳細モーダル（タグ分析、ヒートマップ、タイムライン）
 - [ ] 設定ページ（目標設定、通知設定）
 - [ ] AI励ましメッセージ統合（Gemini 2.0 Flash）
 
