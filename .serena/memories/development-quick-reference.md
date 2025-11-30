@@ -265,6 +265,29 @@ function HistoryPage() {
 }
 ```
 
+#### 成果可視化パネル（B-03）の使用（NEW! 2025-11-30）
+```typescript
+import { useAchievements } from '@/hooks/useAchievements';
+import { AchievementPanel } from '@/components/dashboard/AchievementPanel';
+
+function DashboardPage() {
+  const { stats: achievementStats, isLoading: achievementsLoading } = useAchievements();
+
+  return (
+    <div>
+      {!achievementsLoading && achievementStats.daysTracking > 0 && (
+        <AchievementPanel
+          totalMoneySaved={achievementStats.totalMoneySaved}
+          totalMinutesSaved={achievementStats.totalMinutesSaved}
+          totalResisted={achievementStats.totalResisted}
+          daysTracking={achievementStats.daysTracking}
+        />
+      )}
+    </div>
+  );
+}
+```
+
 ## Firebase初期化パターン
 
 ### lib/firebase/config.ts
@@ -381,9 +404,16 @@ npm run build 2>&1 | tee build.log
   - リアルタイム保存機能
   - 保存確認メッセージ
 
-**Phase 1 完全完了！** 🎉
+### Phase 2 開始 ✅ 成果可視化パネル完了（2025-11-30）
+- [x] 成果可視化パネル（B-03） ✅
+  - AchievementPanel.tsx（4指標表示: 節約金額、取り戻した時間、我慢成功回数、記録継続日数）
+  - useAchievements.ts（累積統計フック）
+  - calculateCumulativeStats（累積統計計算関数）
+  - 励ましメッセージ機能
 
-次のステップ: Phase 2（成果可視化パネル、PWA設定、iOSインストールガイド）
+**Phase 1 & B-03 完全完了！** 🎉
+
+次のステップ: Phase 2（PWA設定、iOSインストールガイド）
 
 ## 参考リンク
 

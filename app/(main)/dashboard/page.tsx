@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useRecords } from '@/hooks/useRecords';
+import { useAchievements } from '@/hooks/useAchievements';
 import GoalHeader from '@/components/dashboard/GoalHeader';
 import RecordButton from '@/components/dashboard/RecordButton';
 import RandomTip from '@/components/dashboard/RandomTip';
+import { AchievementPanel } from '@/components/dashboard/AchievementPanel';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { SOSModal } from '@/components/sos/SOSModal';
@@ -26,6 +28,7 @@ export default function DashboardPage() {
     syncPending,
     isOnline,
   } = useRecords();
+  const { stats: achievementStats, isLoading: achievementsLoading } = useAchievements();
 
   // Modal states
   const [showSOSModal, setShowSOSModal] = useState(false);
@@ -158,6 +161,16 @@ export default function DashboardPage() {
 
         {/* Random Tip */}
         <RandomTip />
+
+        {/* Achievement Panel (B-03) */}
+        {!achievementsLoading && achievementStats.daysTracking > 0 && (
+          <AchievementPanel
+            totalMoneySaved={achievementStats.totalMoneySaved}
+            totalMinutesSaved={achievementStats.totalMinutesSaved}
+            totalResisted={achievementStats.totalResisted}
+            daysTracking={achievementStats.daysTracking}
+          />
+        )}
 
         {/* Record Buttons */}
         <div className="grid grid-cols-1 gap-4">

@@ -23,6 +23,7 @@ import {
   setupBackgroundSync,
   isOnline,
   hasPendingSync,
+  saveSummary,
 } from '@/lib/indexeddb';
 import { calculateDailySummary } from '@/lib/utils/summary';
 
@@ -203,10 +204,30 @@ export function useRecords() {
     if (!user) return;
 
     const today = getTodayDate();
+    const { settings } = useSettingsStore.getState();
 
-    // This will be implemented in the summary utility
-    // For now, it's a placeholder
-    console.log('Summary update needed for', today);
+    try {
+      // Get all records for today
+      const records = await getRecordsByDate(user.uid, today);
+
+      // Calculate summary from records
+      const summary = calculateDailySummary(
+        user.uid,
+        today,
+        records,
+        settings?.app.cigarettePrice ?? 600,
+        settings?.app.cigarettesPerPack ?? 20,
+        settings?.app.minutesPerCigarette ?? 7,
+        settings?.goals.dailyTarget ?? 20
+      );
+
+      // Save summary to IndexedDB (and sync to Firestore if online)
+      await saveSummary(summary);
+
+      console.log('Summary updated for', today, summary);
+    } catch (error) {
+      console.error('Failed to update summary:', error);
+    }
   }, [user, getTodayDate]);
 
   /**

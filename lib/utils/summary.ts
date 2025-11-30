@@ -211,3 +211,62 @@ export function checkGoalProgress(
     remainingCigarettes,
   };
 }
+
+/**
+ * Calculates cumulative statistics across multiple daily summaries.
+ * Used for the Achievement Panel (B-03) to show total progress.
+ *
+ * @param summaries - Array of daily summaries
+ * @returns Cumulative statistics
+ */
+export function calculateCumulativeStats(summaries: DailySummary[]): {
+  totalMoneySaved: number;
+  totalMinutesSaved: number;
+  totalResisted: number;
+  totalSmoked: number;
+  totalCraved: number;
+  daysTracking: number;
+  averageResistanceRate: number;
+} {
+  if (summaries.length === 0) {
+    return {
+      totalMoneySaved: 0,
+      totalMinutesSaved: 0,
+      totalResisted: 0,
+      totalSmoked: 0,
+      totalCraved: 0,
+      daysTracking: 0,
+      averageResistanceRate: 0,
+    };
+  }
+
+  const totalMoneySaved = summaries.reduce(
+    (sum, s) => sum + s.moneySaved,
+    0
+  );
+  const totalMinutesSaved = summaries.reduce(
+    (sum, s) => sum + s.minutesSaved,
+    0
+  );
+  const totalResisted = summaries.reduce(
+    (sum, s) => sum + s.totalResisted,
+    0
+  );
+  const totalSmoked = summaries.reduce((sum, s) => sum + s.totalSmoked, 0);
+  const totalCraved = summaries.reduce((sum, s) => sum + s.totalCraved, 0);
+
+  // Average resistance rate across all days
+  const averageResistanceRate =
+    summaries.reduce((sum, s) => sum + s.resistanceRate, 0) /
+    summaries.length;
+
+  return {
+    totalMoneySaved,
+    totalMinutesSaved,
+    totalResisted,
+    totalSmoked,
+    totalCraved,
+    daysTracking: summaries.length,
+    averageResistanceRate: Math.round(averageResistanceRate),
+  };
+}
