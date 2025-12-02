@@ -353,6 +353,51 @@ Chrome DevTools > Network > Offline チェック
 npm run build 2>&1 | tee build.log
 ```
 
+## iOSインストールガイド（E-02）実装（NEW! 2025-12-03）
+
+### 使用方法
+```typescript
+// フック使用例
+import { useInstallPrompt } from '@/hooks/useInstallPrompt';
+
+function MyComponent() {
+  const {
+    isInstalled,       // PWAがインストール済みか
+    isIOS,             // iOSデバイスか
+    shouldShowGuide,   // インストールガイドを表示すべきか
+    dismissGuide,      // ガイドを閉じる関数
+    promptInstall,     // Android/Chrome用インストールプロンプト（使用可能な場合）
+  } = useInstallPrompt();
+
+  return (
+    <>
+      {shouldShowGuide && <InstallPromptBanner onDismiss={dismissGuide} />}
+      {isIOS && !isInstalled && <Link href="/install-guide">インストール方法</Link>}
+    </>
+  );
+}
+```
+
+### 実装ファイル
+- **hooks/useInstallPrompt.ts** - PWAインストール状態検出
+  - iOS判定: `/(iPhone|iPad|iPod)/.test(navigator.userAgent)`
+  - インストール済み判定: `display-mode: standalone`メディアクエリ
+  - beforeinstallprompt イベント（Android/Chrome）
+  - localStorage制御: `"swan-install-guide-dismissed"`
+- **components/install/InstallGuide.tsx** - 4ステップ視覚ガイド
+  - CSS-onlyスマホUIモックアップ
+  - ステップ1: 概要説明
+  - ステップ2: Safari共有ボタン位置
+  - ステップ3: 「ホーム画面に追加」選択
+  - ステップ4: 完了画面
+- **components/install/InstallPromptBanner.tsx** - ダッシュボードバナー
+  - Tealグラデーション背景
+  - 「インストール方法を見る」CTA
+  - 閉じるボタン（44px最小タッチターゲット）
+- **app/(main)/install-guide/page.tsx** - インストールガイドページ
+- **app/(main)/dashboard/page.tsx** - バナー統合
+- **app/(main)/settings/page.tsx** - 設定からのリンク
+
 ## Phase 1 実装チェックリスト
 
 ### Week 1 ✅ 完了

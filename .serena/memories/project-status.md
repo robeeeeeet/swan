@@ -516,7 +516,29 @@ Phase 1のすべての機能が実装完了しました：
   - `package.json` の build スクリプトに `--webpack` フラグ追加（Turbopack非互換対応）
   - `sw.js`, `workbox-*.js` が正常に生成
 - [x] オフラインページ（/offline）✅ 完了
-- [ ] インストールガイド（E-02）（未着手）
+- [x] インストールガイド（E-02）✅ 完了（2025-12-03）
+  - **hooks/useInstallPrompt.ts** - PWAインストール状態検出フック
+    - iOS Safari判定（user-agent検出）
+    - インストール済み判定（display-mode: standalone）
+    - beforeinstallprompt イベントハンドリング（Android/Chrome）
+    - localStorage による表示制御（"swan-install-guide-dismissed"）
+  - **components/install/InstallGuide.tsx** - 4ステップ視覚ガイド
+    - ステップ1: 概要説明（なぜ必要か？）
+    - ステップ2: Safari共有ボタン位置を視覚化
+    - ステップ3: 共有メニューから「ホーム画面に追加」選択
+    - ステップ4: 完了画面（通知受取可能の案内）
+    - CSS-onlyスマホUIモックアップ（軽量・高速）
+  - **components/install/InstallPromptBanner.tsx** - ダッシュボード促進バナー
+    - グラデーション背景（Teal 500-600）
+    - 「インストール方法を見る」CTA
+    - 閉じるボタン（localStorage保存）
+  - **app/(main)/install-guide/page.tsx** - インストールガイドページ
+    - 完了/スキップ時の処理（localStorage + リダイレクト）
+  - **app/(main)/dashboard/page.tsx** - バナー統合
+    - `shouldShowGuide && <InstallPromptBanner />` 表示
+  - **app/(main)/settings/page.tsx** - 設定からのリンク
+    - iOS未インストール時のみ表示
+    - 「ホーム画面に追加」セクション
 
 #### Phase 3: Web Push通知・AI機能
 - [ ] Push通知許可UI

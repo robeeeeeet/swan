@@ -2,8 +2,10 @@
 
 import { FC, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { GoalSection } from '@/components/settings/GoalSection';
 import { CostSection } from '@/components/settings/CostSection';
 import { NotificationSection } from '@/components/settings/NotificationSection';
@@ -34,6 +36,7 @@ const SettingsPage: FC = () => {
     updateApp,
     getDefaultSettings,
   } = useSettingsStore();
+  const { isInstalled, isIOS } = useInstallPrompt();
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -182,6 +185,32 @@ const SettingsPage: FC = () => {
 
         {/* アカウント管理セクション */}
         <AccountSection />
+
+        {/* インストールガイドセクション（iOSでまだインストールしていない場合） */}
+        {isIOS && !isInstalled && (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow">
+            <div className="flex items-start gap-4">
+              <div className="text-4xl flex-shrink-0">🦢</div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                  ホーム画面に追加
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  アプリのように使えて、通知も受け取れるようになります
+                </p>
+                <Link
+                  href="/install-guide"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-xl font-medium hover:bg-teal-600 transition-colors min-h-[44px]"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  インストール方法を見る
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* アプリ情報 */}
         <div className="pt-8 pb-4 text-center space-y-2">

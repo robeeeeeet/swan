@@ -6,10 +6,12 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useRecords } from '@/hooks/useRecords';
 import { useAchievements } from '@/hooks/useAchievements';
+import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import GoalHeader from '@/components/dashboard/GoalHeader';
 import RecordButton from '@/components/dashboard/RecordButton';
 import RandomTip from '@/components/dashboard/RandomTip';
 import { AchievementPanel } from '@/components/dashboard/AchievementPanel';
+import { InstallPromptBanner } from '@/components/install/InstallPromptBanner';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { SOSModal } from '@/components/sos/SOSModal';
@@ -29,6 +31,7 @@ export default function DashboardPage() {
     isOnline,
   } = useRecords();
   const { stats: achievementStats, isLoading: achievementsLoading, refresh: refreshAchievements } = useAchievements();
+  const { shouldShowGuide, dismissGuide } = useInstallPrompt();
 
   // Modal states
   const [showSOSModal, setShowSOSModal] = useState(false);
@@ -159,6 +162,11 @@ export default function DashboardPage() {
           <div className="bg-primary/10 border border-primary text-primary-dark dark:text-primary px-4 py-2 rounded-lg text-sm text-center">
             同期中...
           </div>
+        )}
+
+        {/* Install Prompt Banner */}
+        {shouldShowGuide && (
+          <InstallPromptBanner onDismiss={dismissGuide} />
         )}
 
         {/* Goal Header */}
