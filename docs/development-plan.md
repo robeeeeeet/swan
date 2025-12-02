@@ -66,6 +66,8 @@ swan/
 │   │   │   └── page.tsx
 │   │   └── result/
 │   │       └── page.tsx
+│   ├── offline/
+│   │   └── page.tsx        # オフラインフォールバック
 │   ├── api/                # API Routes
 │   │   ├── smoke-records/
 │   │   │   └── route.ts
@@ -480,7 +482,8 @@ interface SyncQueueItem {
 | ~~統計API実装~~ | ✅ useAchievements フック実装済み | ✅ 完了 |
 | ~~ランダムTips実装（B-02）~~ | ✅ Phase 1で完了 | ✅ 完了 |
 | ~~設定画面基本実装~~ | ✅ Phase 1で完了 | ✅ 完了 |
-| PWA基本設定（manifest.json, next-pwa） | PWAインストール可能 | 🔴 未着手 |
+| PWA基本設定（manifest.json, next-pwa） | PWAインストール可能 | ✅ 完了（2025-12-03） |
+| オフラインページ（/offline） | オフラインフォールバック | ✅ 完了（2025-12-03） |
 | iOS インストール誘導UI実装（E-02） | インストールガイド | 🔴 未着手 |
 | ~~オフライン対応（IndexedDB同期）~~ | ✅ Phase 1で完了 | ✅ 完了 |
 | ~~カレンダー/履歴表示実装（E-03）~~ | ✅ Phase 1で完了 | ✅ 完了 |
@@ -688,10 +691,46 @@ CRON_SECRET=
 - ✅ 履歴ページ（期間フィルター・統計・チャート・詳細モーダル）
 - ✅ 設定ページ（目標・コスト・通知・アカウント管理）
 
-**次のフェーズ: Phase 2**
-- 成果可視化パネル実装（B-03）
-- PWA基本設定（manifest.json, Service Worker）
-- iOSインストール誘導UI
+**次のフェーズ: Phase 2 残タスク**
+- iOSインストール誘導UI（E-02）
+
+---
+
+### 2025-12-03: PWA基盤設定完了 ✅
+
+**実装内容:**
+1. **PWAアイコン設定**
+   - 8サイズのPWAアイコン（72px〜512px）
+   - apple-touch-icon.png（180x180）
+   - favicon.ico（32x32）
+   - maskableアイコン設定
+
+2. **Service Worker設定** (`next.config.ts`)
+   - `@ducanh2912/next-pwa` 10.2.9による自動生成
+   - Workboxランタイムキャッシュ戦略（8種類）
+   - オフラインフォールバック: `/offline`
+   - 問題解決: Next.js 16のTurbopackデフォルト化対応
+     - `package.json`: `"build": "next build --webpack"` に変更
+     - 開発時はTurbopack（高速）、本番ビルドはWebpack（PWA生成）
+
+3. **オフラインページ** (`app/offline/page.tsx`)
+   - オフライン状態の視覚的表示
+   - オフラインでも利用可能な機能リスト
+   - 再読み込みボタン
+
+4. **メタデータ更新** (`app/layout.tsx`)
+   - icons設定（favicon、PWAアイコン、apple-touch-icon）
+   - manifest.json参照
+
+**ブラウザテスト結果:**
+- ✅ Service Worker: 登録・有効化確認（scope: /）
+- ✅ PWAアイコン: 全サイズHTTP 200
+- ✅ オフラインページ: 正常表示
+
+**生成されるファイル:**
+- `public/sw.js` - メインService Worker
+- `public/workbox-*.js` - Workboxランタイム
+- `public/swe-worker-*.js` - 追加ワーカー
 
 ---
 
@@ -699,6 +738,7 @@ CRON_SECRET=
 
 | バージョン | 日付 | 変更内容 |
 |-----------|------|---------|
+| 1.4.0 | 2025-12-03 | Phase 2 PWA設定完了（Service Worker、オフラインページ、アイコン設定） |
 | 1.3.0 | 2025-12-01 | date-fns採用（タイムゾーン対応強化）、Phase 1バグ修正完了 |
 | 1.2.0 | 2025-11-30 | Phase 1完全完了（設定ページ実装）、実装進捗レポート更新 |
 | 1.1.0 | 2025-11-30 | データ永続化層実装完了、実装進捗レポート追加 |

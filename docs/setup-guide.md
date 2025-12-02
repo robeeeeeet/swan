@@ -2,11 +2,13 @@
 
 ## 現在の状況
 
-✅ **Phase 1 基本機能の実装が完了しました！**
+✅ **Phase 1 完全完了 + Phase 2 PWA設定 部分完了！**（2025-12-03更新）
 
 以下の機能が実装されています:
 
 ### 実装済み機能
+
+#### Phase 1: MVP基盤（完了）
 
 1. **Firebase設定**
    - 認証（匿名認証 + Google認証）
@@ -17,7 +19,8 @@
    - Button（7種類のバリアント）
    - Card（複合コンポーネント）
    - Modal（フォーカストラップ、アクセシビリティ対応）
-   - Celebration（祝福アニメーション - 我慢成功時に表示）
+   - Celebration（祝福アニメーション）
+   - Switch（トグルスイッチ、アクセシビリティ対応）
 
 3. **状態管理（Zustand）**
    - userStore（ユーザー認証状態）
@@ -26,13 +29,32 @@
 
 4. **ページ**
    - トップページ（/）- 認証状態に応じたリダイレクト
-   - サインインページ（/signin）- 匿名/Googleログイン ※ディレクトリは `app/(auth)/signin/` だがURLは `/signin`
-   - ダッシュボード（/dashboard）- 3つの記録ボタン、目標進捗、ランダムTips
+   - サインインページ（/signin）- 匿名/Googleログイン
+   - ダッシュボード（/dashboard）- 記録ボタン、目標進捗、Tips、成果可視化パネル
+   - SOS機能（/sos/timer, /sos/breathing）- 3分タイマー、深呼吸モード
+   - 履歴ページ（/history）- 期間フィルター、統計、チャート、詳細モーダル
+   - 設定ページ（/settings）- 目標・コスト・通知・アカウント管理
+   - オフラインページ（/offline）- オフラインフォールバック
 
-5. **型定義**
+5. **データ永続化**
+   - IndexedDB統合（オフラインファースト）
+   - Firestore同期（自動バックグラウンド同期）
+   - 同期キュー（オフライン時の変更を保持）
+
+6. **型定義**
    - UserProfile, SmokingRecord, DailySummary
    - UserSettings, NotificationSettings, GoalSettings
    - SituationTag（10種類の状況タグ）
+
+#### Phase 2: PWA設定（部分完了）
+
+7. **PWA基盤**
+   - PWAアイコン（72px〜512px、8サイズ）
+   - apple-touch-icon.png（180x180）
+   - favicon.ico（32x32）
+   - manifest.json（maskableアイコン対応）
+   - Service Worker（Workboxキャッシュ戦略）
+   - オフラインフォールバックページ
 
 ### データフロー
 
@@ -43,12 +65,13 @@
   ↓
 状況タグ選択モーダル
   ↓
-recordsStore.addRecord()
+useRecords hook
   ↓
-（今後実装）
-- IndexedDBに保存
-- Firestoreに同期
-- DailySummaryを更新
+IndexedDB保存（即座）
+  ↓
+Firestore同期（オンライン時）または同期キュー（オフライン時）
+  ↓
+DailySummary自動更新
 ```
 
 ## 次のステップ: Firebase プロジェクトの設定
@@ -134,23 +157,26 @@ npm run dev
    - 「吸いたい」→ 状況タグ選択 → 記録（将来はSOSフロー）
    - 「我慢できた」→ 状況タグ選択 → 記録 → 励ましメッセージ表示
 
-## まだ実装していない機能
+## 残りのタスク
 
-### Phase 1 残タスク
-- [ ] IndexedDB統合（オフラインデータ保存）
-- [ ] Firestore CRUD操作（records, settings, summaries）
-- [ ] Daily Summary自動更新ロジック
-- [ ] SOS機能（3分タイマー、深呼吸モード）
+### Phase 2 残タスク
+- [ ] iOSインストール誘導UI（E-02）
+- [ ] iOSスプラッシュスクリーン
 
-### Phase 2以降
-- [ ] PWAアイコン・スプラッシュスクリーン作成
-- [ ] Service Workerオフライン対応
-- [ ] Web Push通知機能
+### Phase 3: Web Push通知 + AI
+- [ ] Web Push通知機能（FCM）
 - [ ] Gemini AIコーチング機能
-- [ ] 履歴ページ・統計ダッシュボード
-- [ ] 設定ページ
+- [ ] モーニング・ブリーフィング（C-01）
+- [ ] 魔の時間帯アラート（C-02）
+- [ ] ステップダウン提案（C-03）
+- [ ] 生存確認通知（C-04）
+- [ ] Vercel Cron Jobs設定
+
+### Phase 4: テスト・最適化
 - [ ] E2Eテスト（Playwright）
 - [ ] パフォーマンス最適化
+- [ ] アクセシビリティ監査
+- [ ] セキュリティレビュー
 
 ## トラブルシューティング
 
@@ -178,9 +204,30 @@ npm run dev
 
 ## 次の開発ステップ
 
-1. **IndexedDB実装** - オフラインデータ永続化
-2. **Firestore CRUD** - クラウド同期機能
-3. **SOS機能** - タイマー・深呼吸モード
-4. **履歴ページ** - 過去の記録閲覧
+1. **iOSインストール誘導UI（E-02）** - ホーム画面追加ガイド
+2. **Web Push通知設定** - FCM統合
+3. **Gemini AI統合** - AIコーチング機能
 
 詳細は `docs/development-plan.md` を参照してください。
+
+## ビルドコマンド
+
+```bash
+# 開発サーバー（Turbopack使用、高速）
+npm run dev
+
+# 本番ビルド（Webpack使用、PWA生成）
+npm run build
+
+# 本番サーバー
+npm run start
+
+# Lint
+npm run lint
+
+# テスト
+npm run test
+npm run test:e2e
+```
+
+**注意**: 本番ビルドでは `--webpack` フラグが必要です（`@ducanh2912/next-pwa` がTurbopack非互換のため）。

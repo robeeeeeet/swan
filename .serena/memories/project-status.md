@@ -2,8 +2,8 @@
 
 ## プロジェクト概要
 - **プロジェクト名**: Swan（スワン）- 禁煙・減煙支援PWA
-- **現在のステータス**: Phase 1 データ永続化層完了 ✅
-- **開発フェーズ**: Phase 1 後半（SOS機能、履歴、設定ページ実装予定）
+- **現在のステータス**: Phase 2 PWA設定 部分完了 ✅
+- **開発フェーズ**: Phase 2（PWA設定進行中、iOSインストールガイド実装予定）
 
 ## 最新の実装状況
 
@@ -92,6 +92,8 @@ swan/
 │   │   │   └── page.tsx         ✅ 3分タイマーページ
 │   │   └── breathing/
 │   │       └── page.tsx         ✅ 深呼吸モードページ
+│   ├── offline/
+│   │   └── page.tsx              ✅ オフラインフォールバックページ NEW! (2025-12-03)
 │   ├── api/                      📁 (ディレクトリのみ)
 │   ├── layout.tsx                ✅ ルートレイアウト
 │   ├── globals.css               ✅ Swanデザインシステム
@@ -427,6 +429,62 @@ Phase 1のすべての機能が実装完了しました：
 - **ボタン視認性**: ghost→outlineに変更（枠線追加）
 - **ローディング**: 記録送信中のローディング表示追加
 
+### ✅ PWA基盤設定完了（2025-12-03 NEW!）
+
+#### 17. PWA基盤設定
+- **next.config.ts** - PWA設定強化 ✅
+  - `@ducanh2912/next-pwa` によるService Worker自動生成
+  - Workboxランタイムキャッシュ戦略（8種類）：
+    - Google Fonts: CacheFirst（1年）
+    - Static Font Assets: StaleWhileRevalidate（1週間）
+    - Image Assets: StaleWhileRevalidate（24時間）
+    - Next.js Image Optimization: StaleWhileRevalidate（24時間）
+    - JS Assets: StaleWhileRevalidate（24時間）
+    - CSS Assets: StaleWhileRevalidate（24時間）
+    - Firestore API: NetworkFirst（5分、タイムアウト10秒）
+  - オフラインフォールバック: `/offline`
+  - `turbopack: {}` 設定（開発時のみTurbopack使用）
+
+- **package.json** - ビルドスクリプト修正 ✅
+  - `"build": "next build --webpack"` に変更
+  - 理由: Next.js 16のTurbopackデフォルト化と`@ducanh2912/next-pwa`の非互換対応
+  - 開発時はTurbopack（高速）、本番ビルド時はWebpack（PWA生成）を使い分け
+
+- **app/offline/page.tsx** - オフラインフォールバックページ ✅ NEW!
+  - `"use client"` ディレクティブ（クライアントコンポーネント）
+  - オフライン状態の視覚的表示
+  - オフラインでも利用可能な機能リスト
+  - 再読み込みボタン
+
+- **app/layout.tsx** - アイコンメタデータ追加 ✅
+  - favicon.ico（any size）
+  - icon-192x192.png, icon-512x512.png
+  - apple-touch-icon.png（180x180）
+
+- **public/manifest.json** - PWAマニフェスト強化 ✅
+  - maskableアイコン分離（purpose: "maskable"）
+  - 標準アイコン（purpose: "any"）8サイズ
+
+- **public/icons/** - PWAアイコン ✅
+  - icon-72x72.png, icon-96x96.png, icon-128x128.png
+  - icon-144x144.png, icon-152x152.png, icon-192x192.png
+  - icon-384x384.png, icon-512x512.png
+
+- **public/** - ルートアセット ✅
+  - favicon.ico（32x32）
+  - apple-touch-icon.png（180x180）
+
+#### 生成されるService Workerファイル
+ビルド後に `public/` に生成：
+- `sw.js` - メインService Worker
+- `workbox-*.js` - Workboxランタイム
+- `swe-worker-*.js` - 追加ワーカー
+
+#### 検証結果（2025-12-03）
+- ✅ Service Worker: 登録・有効化確認
+- ✅ アイコン: 全サイズHTTP 200
+- ✅ オフラインページ: 正常表示
+
 ### ✅ Tips システム刷新（2025-12-01 NEW!）
 
 #### 16. 禁煙対策Tips（30種類カテゴリー別）
@@ -450,11 +508,15 @@ Phase 1のすべての機能が実装完了しました：
 
 ### 📋 Phase 2 以降のタスク
 
-#### Phase 2: PWA設定（現在のフェーズ）
-- [ ] PWAアイコン作成（72x72～512x512）
-- [ ] iOSスプラッシュスクリーン  
-- [ ] Service Worker設定（next-pwa）
-- [ ] インストールガイド（E-02）
+#### Phase 2: PWA設定（現在のフェーズ）✅ 部分完了（2025-12-03）
+- [x] PWAアイコン作成（72x72～512x512）✅ 完了
+- [ ] iOSスプラッシュスクリーン（未着手）
+- [x] Service Worker設定（next-pwa）✅ 完了
+  - `next.config.ts` に Workbox キャッシュ戦略設定
+  - `package.json` の build スクリプトに `--webpack` フラグ追加（Turbopack非互換対応）
+  - `sw.js`, `workbox-*.js` が正常に生成
+- [x] オフラインページ（/offline）✅ 完了
+- [ ] インストールガイド（E-02）（未着手）
 
 #### Phase 3: Web Push通知・AI機能
 - [ ] Push通知許可UI
