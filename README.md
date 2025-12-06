@@ -72,7 +72,18 @@ cp .env.example .env.local
 - Gemini API鍵
 - Cron Secret（Vercel scheduled functions用）
 
-詳細は`.env.example`を参照してください。
+詳細は以下を参照してください：
+- `.env.example` - 環境変数テンプレート
+- `docs/environment-variables.md` - 完全な環境変数ガイド
+- `docs/setup-guide.md` - セットアップ手順書
+
+### Firebase接続テスト
+
+環境変数とFirebase設定が正しいか確認:
+
+```bash
+npm run test:firebase
+```
 
 ## 💻 開発
 
@@ -141,10 +152,13 @@ Swanは独自のデザインシステムを採用しています：
 
 ## 📚 ドキュメント
 
+- `docs/setup-guide.md` - セットアップ手順書（Firebase設定含む）
+- `docs/environment-variables.md` - 環境変数完全ガイド
 - `docs/requirements.md` - 完全な機能要件定義書
 - `docs/development-plan.md` - フェーズ別実装計画
 - `docs/memo.md` - オリジナル機能仕様
 - `CLAUDE.md` - Claude Code用プロジェクトガイド
+- `firestore.rules` - Firestoreセキュリティルール
 
 ## 🔐 セキュリティとプライバシー
 

@@ -449,16 +449,20 @@ function MyComponent() {
   - リアルタイム保存機能
   - 保存確認メッセージ
 
-### Phase 2 開始 ✅ 成果可視化パネル完了（2025-11-30）
+### Phase 2 完了 ✅（2025-12-03）
 - [x] 成果可視化パネル（B-03） ✅
-  - AchievementPanel.tsx（4指標表示: 節約金額、取り戻した時間、我慢成功回数、記録継続日数）
-  - useAchievements.ts（累積統計フック）
-  - calculateCumulativeStats（累積統計計算関数）
-  - 励ましメッセージ機能
+- [x] PWA基盤設定 ✅
+- [x] iOSインストールガイド（E-02） ✅
 
-**Phase 1 & B-03 完全完了！** 🎉
+### Phase 3 完了 ✅（2025-12-06）
+- [x] Push通知基盤（FCM）✅
+- [x] Gemini AI連携 ✅
+- [x] AIコーチング機能（C-01, C-02, C-03, C-04, D-03）✅
+- [x] Cron Jobs設定 ✅
 
-次のステップ: Phase 2（PWA設定、iOSインストールガイド）
+**Phase 1～3 完全完了！** 🎉
+
+次のステップ: Phase 4（テスト・最適化）
 
 ## タイムゾーン対応日付ユーティリティ（date-fns使用）
 
@@ -573,6 +577,147 @@ function getSuggestedTips(situationTags: string[]) {
 }
 ```
 
+## Gemini AI連携（NEW! 2025-12-06）
+
+### AIコーチングメッセージ生成
+```typescript
+import { useCoaching, useSOSCoaching } from '@/hooks/useCoaching';
+
+// 基本的な使い方
+function MyComponent() {
+  const { generateMessage, currentMessage, isLoading } = useCoaching();
+
+  const handleGetMessage = async () => {
+    const result = await generateMessage('morning_briefing');
+    console.log(result?.message);
+  };
+}
+
+// SOS専用フック
+function SOSComponent() {
+  const { getEncouragement, celebrateSuccess, isLoading } = useSOSCoaching();
+
+  // 励ましメッセージ取得
+  const message = await getEncouragement(['stress', 'habit']);
+
+  // 成功祝福
+  const celebration = await celebrateSuccess();
+}
+```
+
+### 利用可能なメッセージタイプ
+| タイプ | 説明 | 用途 |
+|--------|------|------|
+| `morning_briefing` | 朝の励まし | C-01 Cron |
+| `craving_alert` | 先回りアラート | C-02 Cron |
+| `step_down` | 目標下げ提案 | C-03 Cron |
+| `survival_check` | 生存確認 | C-04 Cron |
+| `sos_encouragement` | SOS励まし | SOSモーダル |
+| `success_celebration` | 成功祝福 | 我慢成功時 |
+
+### API直接呼び出し
+```typescript
+// POST /api/coaching
+const response = await fetch('/api/coaching', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    type: 'sos_encouragement',
+    context: {
+      daysTracking: 7,
+      todaySmoked: 5,
+      todayCraved: 2,
+      todayResisted: 3,
+      dailyGoal: 10,
+      situationTags: ['stress'],
+    },
+  }),
+});
+
+const result = await response.json();
+// { message: "...", type: "sos_encouragement", usedAI: true }
+```
+
+## Push通知（NEW! 2025-12-06）
+
+### 通知許可フック使用例
+```typescript
+import { usePushPermission } from '@/hooks/usePushPermission';
+
+function NotificationSettings() {
+  const {
+    permissionState,  // 'loading' | 'unsupported' | 'prompt' | 'granted' | 'denied' | 'subscribed'
+    isSupported,
+    needsIOSInstallation,
+    isSubscribed,
+    subscribe,
+    unsubscribe,
+  } = usePushPermission();
+
+  const handleEnable = async () => {
+    const result = await subscribe();
+    if (result.success) {
+      console.log('通知が有効になりました');
+    }
+  };
+}
+```
+
+### 許可UIコンポーネント
+```tsx
+import { PushPermissionPrompt } from '@/components/pwa/PushPermissionPrompt';
+
+// バナー表示（ダッシュボード用）
+<PushPermissionPrompt variant="banner" />
+
+// カード表示（設定ページ用）
+<PushPermissionPrompt variant="card" />
+
+// インライン表示（コンパクト）
+<PushPermissionPrompt variant="inline" />
+```
+
+### サーバーサイド通知送信
+```typescript
+import { sendSwanNotification } from '@/lib/firebase/admin';
+
+// 通知送信
+await sendSwanNotification(token, 'morning_briefing', {
+  title: 'おはようございます',
+  body: '今日も1日頑張りましょう！',
+  url: '/dashboard',
+});
+```
+
+## Cron Jobs（NEW! 2025-12-06）
+
+### 設定ファイル: vercel.json
+```json
+{
+  "crons": [
+    { "path": "/api/cron/morning-briefing", "schedule": "0 22 * * *" },
+    { "path": "/api/cron/craving-alert", "schedule": "30 0,3,6,9,12 * * *" },
+    { "path": "/api/cron/survival-check", "schedule": "0 23,3,7,11 * * *" },
+    { "path": "/api/cron/step-down", "schedule": "0 11 * * 0" }
+  ]
+}
+```
+
+### スケジュール説明（JST換算）
+| ジョブ | UTC | JST | 頻度 |
+|--------|-----|-----|------|
+| morning-briefing | 22:00 | 07:00 | 毎日 |
+| craving-alert | 0:30,3:30... | 9:30,12:30... | 5回/日 |
+| survival-check | 23:00,3:00... | 8:00,12:00... | 4回/日 |
+| step-down | 11:00 日曜 | 20:00 日曜 | 週1回 |
+
+### 手動テスト
+```bash
+# CRON_SECRET を設定して呼び出し
+curl -H "Authorization: Bearer YOUR_CRON_SECRET" \
+  http://localhost:3000/api/cron/morning-briefing
+```
+
 ## 参考リンク
 
 - [Next.js 16 Documentation](https://nextjs.org/docs)
@@ -580,3 +725,5 @@ function getSuggestedTips(situationTags: string[]) {
 - [Firebase Documentation](https://firebase.google.com/docs)
 - [Zustand Documentation](https://zustand-demo.pmnd.rs/)
 - [@ducanh2912/next-pwa](https://github.com/DuCanhGH/next-pwa)
+- [Google Gemini API](https://ai.google.dev/gemini-api/docs)
+- [Vercel Cron Jobs](https://vercel.com/docs/cron-jobs)

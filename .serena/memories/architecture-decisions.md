@@ -458,6 +458,108 @@ async function getAISuggestedTip(context: UserContext): Promise<Tip> {
 - 表示後に「我慢できた」が押された率
 - カテゴリー別の抵抗成功率
 
+## Phase 3 アーキテクチャ決定（2025-12-06 NEW!）
+
+### Gemini AI 統合設計
+
+#### クライアント構成（lib/ai/client.ts）
+1. **@google/genai SDK採用**
+   - 公式SDK使用でAPI変更に追従しやすい
+   - TypeScript型定義完備
+   - ストリーミング対応
+
+2. **生成設定**
+   ```typescript
+   COACHING_GENERATION_CONFIG = {
+     temperature: 0.8,    // 創造性を高めつつ一貫性を保持
+     maxOutputTokens: 500, // 簡潔なメッセージに制限
+     topP: 0.95,          // 多様性確保
+   }
+   ```
+
+3. **エラーハンドリング戦略**
+   - API障害時はフォールバックメッセージを使用
+   - 6種類のメッセージタイプ別にフォールバック用意
+   - ユーザー体験を途切れさせない設計
+
+### プロンプト設計（lib/ai/prompts.ts）
+
+#### 設計原則
+1. **日本語ネイティブ**: 全プロンプトを日本語で記述
+2. **コンテキスト活用**: ユーザーの実績データを含める
+3. **トーン統一**: 励まし・判断しない・ポジティブ
+
+#### メッセージタイプ
+| タイプ | 用途 | トリガー |
+|--------|------|----------|
+| morning_briefing | 朝の励まし | Cron 7:00 JST |
+| craving_alert | 先回りアラート | Cron 5回/日 |
+| step_down | 目標下げ提案 | Cron 日曜20:00 |
+| survival_check | 生存確認 | Cron 4回/日 |
+| sos_encouragement | SOS励まし | SOSモーダル表示時 |
+| success_celebration | 成功祝福 | 我慢成功時 |
+
+### Push通知アーキテクチャ（lib/push/）
+
+#### Firebase Admin SDK vs クライアントSDK
+- **Admin SDK**: サーバーサイドでの通知送信（Cron/API）
+- **クライアントSDK**: トークン取得・フォアグラウンド通知
+
+#### 購読フロー
+```
+ユーザーアクション
+  ↓
+usePushPermission.subscribe()
+  ↓
+Notification.requestPermission()
+  ↓
+getToken() (FCM)
+  ↓
+Firestore保存（users/{userId}/pushSubscriptions/）
+  ↓
+Cron Jobsがトークンを使って通知送信
+```
+
+#### iOS対応
+- PWAとしてホーム画面追加が必須
+- `isIOSRequiringInstallation()` で検出
+- インストールガイドへの誘導
+
+### Cron Jobs設計（vercel.json）
+
+#### スケジュール設計
+| ジョブ | UTC | JST | 理由 |
+|--------|-----|-----|------|
+| morning-briefing | 22:00 | 07:00 | 起床後の通知 |
+| craving-alert | 0:30,3:30... | 9:30,12:30... | 魔の時間帯の10分前 |
+| survival-check | 23:00,3:00... | 8:00,12:00... | 4時間おきの確認 |
+| step-down | 11:00 日曜 | 20:00 日曜 | 週末の振り返り |
+
+#### セキュリティ
+- `CRON_SECRET` ヘッダー検証
+- Vercel Cronからのリクエストのみ許可
+- 不正アクセス防止
+
+### iOSインストールガイド設計（E-02）
+
+#### 検出ロジック（hooks/useInstallPrompt.ts）
+```typescript
+// iOS判定
+/(iPhone|iPad|iPod)/.test(navigator.userAgent)
+
+// インストール済み判定
+window.matchMedia('(display-mode: standalone)').matches
+
+// 表示条件
+shouldShowGuide = isIOS && !isInstalled && !dismissed
+```
+
+#### UXフロー
+1. ダッシュボードにバナー表示
+2. クリックでインストールガイドページへ
+3. 4ステップの視覚的ガイド
+4. 7日間dismiss機能（localStorage）
+
 ## セキュリティ考慮事項
 
 ### 環境変数管理

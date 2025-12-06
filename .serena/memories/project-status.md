@@ -2,8 +2,8 @@
 
 ## プロジェクト概要
 - **プロジェクト名**: Swan（スワン）- 禁煙・減煙支援PWA
-- **現在のステータス**: Phase 2 PWA設定 部分完了 ✅
-- **開発フェーズ**: Phase 2（PWA設定進行中、iOSインストールガイド実装予定）
+- **現在のステータス**: Phase 3 完了 ✅
+- **開発フェーズ**: Phase 4（テスト・最適化準備中）
 
 ## 最新の実装状況
 
@@ -94,7 +94,18 @@ swan/
 │   │       └── page.tsx         ✅ 深呼吸モードページ
 │   ├── offline/
 │   │   └── page.tsx              ✅ オフラインフォールバックページ NEW! (2025-12-03)
-│   ├── api/                      📁 (ディレクトリのみ)
+│   ├── api/                      ✅ NEW! (2025-12-06) API実装
+│   │   ├── coaching/
+│   │   │   └── route.ts         ✅ AIコーチングAPI
+│   │   └── cron/
+│   │       ├── morning-briefing/
+│   │       │   └── route.ts     ✅ C-01 モーニング通知
+│   │       ├── craving-alert/
+│   │       │   └── route.ts     ✅ C-02 魔の時間帯アラート
+│   │       ├── step-down/
+│   │       │   └── route.ts     ✅ C-03 ステップダウン提案
+│   │       └── survival-check/
+│   │           └── route.ts     ✅ C-04 生存確認
 │   ├── layout.tsx                ✅ ルートレイアウト
 │   ├── globals.css               ✅ Swanデザインシステム
 │   └── page.tsx                  ✅ リダイレクトページ
@@ -108,11 +119,17 @@ swan/
 │   ├── dashboard/
 │   │   ├── RecordButton.tsx     ✅
 │   │   ├── GoalHeader.tsx       ✅
-│   │   └── RandomTip.tsx        ✅
+│   │   ├── RandomTip.tsx        ✅
+│   │   └── AchievementPanel.tsx ✅ 成果可視化パネル
 │   ├── sos/
 │   │   ├── Timer.tsx            ✅ 3分タイマーコンポーネント
 │   │   ├── BreathingCircle.tsx  ✅ 深呼吸ガイドコンポーネント
-│   │   └── SOSModal.tsx         ✅ SOSモーダル
+│   │   └── SOSModal.tsx         ✅ SOSモーダル（AI励まし統合）
+│   ├── pwa/                     ✅ NEW! (2025-12-06)
+│   │   └── PushPermissionPrompt.tsx ✅ Push通知許可UI
+│   ├── install/                 ✅ NEW! (2025-12-03)
+│   │   ├── InstallGuide.tsx     ✅ iOSインストールガイド
+│   │   └── InstallPromptBanner.tsx ✅ インストールバナー
 │   ├── history/                 ✅ NEW! (2025-11-30)
 │   │   ├── HistoryCard.tsx      ✅ 日別サマリーカード
 │   │   ├── WeekStats.tsx        ✅ 週間統計カード
@@ -126,7 +143,11 @@ swan/
 ├── hooks/
 │   ├── useAuth.ts               ✅
 │   ├── useRecords.ts            ✅
-│   └── useHistory.ts            ✅ NEW! (2025-11-30)
+│   ├── useHistory.ts            ✅ NEW! (2025-11-30)
+│   ├── useAchievements.ts       ✅ 成果統計フック
+│   ├── useInstallPrompt.ts      ✅ NEW! (2025-12-03) PWAインストール検出
+│   ├── useCoaching.ts           ✅ NEW! (2025-12-06) AIコーチング
+│   └── usePushPermission.ts     ✅ NEW! (2025-12-06) Push通知許可
 ├── lib/
 │   ├── firebase/
 │   │   ├── config.ts            ✅
@@ -142,8 +163,16 @@ swan/
 │   ├── utils/                   ✅ NEW!
 │   │   ├── summary.ts           ✅
 │   │   └── date.ts              ✅ NEW! (2025-12-01) タイムゾーン対応日付ユーティリティ
-│   ├── ai/                      📁 (ディレクトリのみ)
-│   └── push/                    📁 (ディレクトリのみ)
+│   ├── ai/                      ✅ NEW! (2025-12-06) AI連携
+│   │   ├── client.ts            ✅ Gemini APIクライアント
+│   │   ├── prompts.ts           ✅ プロンプトテンプレート
+│   │   ├── coaching.ts          ✅ コーチングサービス
+│   │   └── index.ts             ✅ エクスポート
+│   ├── push/                    ✅ NEW! (2025-12-06) Push通知
+│   │   ├── subscription.ts      ✅ 購読管理
+│   │   └── index.ts             ✅ エクスポート
+│   └── cron/                    ✅ NEW! (2025-12-06) Cronユーティリティ
+│       └── utils.ts             ✅ Cron共通処理
 ├── store/
 │   ├── userStore.ts             ✅
 │   ├── recordsStore.ts          ✅
@@ -506,50 +535,113 @@ Phase 1のすべての機能が実装完了しました：
 - **お気に入り機能**: ユーザーが有効だったTipsをブックマーク
 - **学習機能**: ユーザーの状況タグとTipsの効果を関連付け、パーソナライズ
 
-### 📋 Phase 2 以降のタスク
+### 📋 開発フェーズ完了状況
 
-#### Phase 2: PWA設定（現在のフェーズ）✅ 部分完了（2025-12-03）
+#### Phase 2: PWA設定 ✅ 完了（2025-12-03）
 - [x] PWAアイコン作成（72x72～512x512）✅ 完了
-- [ ] iOSスプラッシュスクリーン（未着手）
 - [x] Service Worker設定（next-pwa）✅ 完了
-  - `next.config.ts` に Workbox キャッシュ戦略設定
-  - `package.json` の build スクリプトに `--webpack` フラグ追加（Turbopack非互換対応）
-  - `sw.js`, `workbox-*.js` が正常に生成
 - [x] オフラインページ（/offline）✅ 完了
 - [x] インストールガイド（E-02）✅ 完了（2025-12-03）
-  - **hooks/useInstallPrompt.ts** - PWAインストール状態検出フック
-    - iOS Safari判定（user-agent検出）
-    - インストール済み判定（display-mode: standalone）
-    - beforeinstallprompt イベントハンドリング（Android/Chrome）
-    - localStorage による表示制御（"swan-install-guide-dismissed"）
-  - **components/install/InstallGuide.tsx** - 4ステップ視覚ガイド
-    - ステップ1: 概要説明（なぜ必要か？）
-    - ステップ2: Safari共有ボタン位置を視覚化
-    - ステップ3: 共有メニューから「ホーム画面に追加」選択
-    - ステップ4: 完了画面（通知受取可能の案内）
-    - CSS-onlyスマホUIモックアップ（軽量・高速）
-  - **components/install/InstallPromptBanner.tsx** - ダッシュボード促進バナー
-    - グラデーション背景（Teal 500-600）
-    - 「インストール方法を見る」CTA
-    - 閉じるボタン（localStorage保存）
-  - **app/(main)/install-guide/page.tsx** - インストールガイドページ
-    - 完了/スキップ時の処理（localStorage + リダイレクト）
-  - **app/(main)/dashboard/page.tsx** - バナー統合
-    - `shouldShowGuide && <InstallPromptBanner />` 表示
-  - **app/(main)/settings/page.tsx** - 設定からのリンク
-    - iOS未インストール時のみ表示
-    - 「ホーム画面に追加」セクション
+- [ ] iOSスプラッシュスクリーン（スキップ - 後回し）
 
-#### Phase 3: Web Push通知・AI機能
-- [ ] Push通知許可UI
-- [ ] モーニング・ブリーフィング（C-01）
-- [ ] 魔の時間帯アラート（C-02）
-- [ ] ステップダウン提案（C-03）
-- [ ] 生存確認通知（C-04）
-- [ ] Gemini AI統合
-- [ ] Vercel Cron Jobs設定
+#### Phase 3: Web Push通知・AI機能 ✅ 完了（2025-12-06）
 
-#### Phase 4: テスト・最適化
+##### Push通知基盤 ✅
+- [x] **lib/firebase/admin.ts** - Firebase Admin SDK初期化
+  - `getAdminMessaging()` - FCMインスタンス取得
+  - `sendPushNotification()` - 単一デバイス送信
+  - `sendPushNotificationToMultiple()` - マルチキャスト送信
+  - `sendSwanNotification()` - Swan専用通知送信
+  - `SwanNotificationType` - 6種類の通知タイプ
+- [x] **public/firebase-messaging-sw.js** - FCM Service Worker
+  - バックグラウンドメッセージ処理
+  - 通知クリック時のアプリ起動
+- [x] **lib/push/subscription.ts** - プッシュ購読管理
+  - `isPushNotificationSupported()` - ブラウザサポート確認
+  - `isIOSRequiringInstallation()` - iOS要件確認
+  - `getFCMToken()` - FCMトークン取得
+  - `subscribeToPushNotifications()` - 購読フロー
+  - `unsubscribeFromPushNotifications()` - 購読解除
+  - `setupForegroundMessageHandler()` - フォアグラウンド通知
+- [x] **hooks/usePushPermission.ts** - 通知許可フック
+  - `PushPermissionState` - 7状態管理
+  - `subscribe()`, `unsubscribe()`, `refresh()`
+- [x] **components/pwa/PushPermissionPrompt.tsx** - 許可UI
+  - 3バリアント: banner, card, inline
+  - 7日間dismissメカニズム
+
+##### Gemini AI連携 ✅
+- [x] **lib/ai/client.ts** - Gemini APIクライアント
+  - `@google/genai` SDK使用
+  - `generateText()` - テキスト生成
+  - `generateTextStream()` - ストリーミング生成
+  - `COACHING_GENERATION_CONFIG` - 温度0.8、500トークン
+- [x] **lib/ai/prompts.ts** - プロンプトテンプレート
+  - `UserCoachingContext` - ユーザーコンテキスト型
+  - `BASE_SYSTEM_PROMPT` - 基本システムプロンプト（日本語）
+  - 6種類のプロンプト関数: morning, craving, step-down, survival, SOS, success
+  - `FALLBACK_MESSAGES` - AI障害時のフォールバック
+- [x] **lib/ai/coaching.ts** - コーチングサービス
+  - `generateCoachingMessage()` - メッセージ生成
+  - `getCurrentTimeOfDay()` - 時間帯判定
+  - `shouldSuggestStepDown()` - ステップダウン判定
+  - `getTypicalCravingHours()` - 吸いたい時間分析
+  - `buildCoachingContext()` - コンテキスト構築
+- [x] **app/api/coaching/route.ts** - コーチングAPI
+  - POST: メッセージ生成
+  - GET: API情報
+- [x] **hooks/useCoaching.ts** - コーチングフック
+  - `generateMessage()` - メッセージ取得
+  - `useSOSCoaching()` - SOS専用フック
+
+##### AIコーチング機能実装 ✅
+- [x] **D-03: SOS AI励ましメッセージ** ✅
+  - `components/sos/SOSModal.tsx` を更新
+  - モーダル開くと自動でAIメッセージ取得
+  - ローディングアニメーション
+  - フォールバックメッセージ対応
+- [x] **C-01: モーニング・ブリーフィング** ✅
+  - `app/api/cron/morning-briefing/route.ts`
+  - 毎朝7時JST実行
+- [x] **C-02: 魔の時間帯アラート** ✅
+  - `app/api/cron/craving-alert/route.ts`
+  - 9:30, 12:30, 15:30, 18:30, 21:30 JST実行
+- [x] **C-03: ステップダウン提案** ✅
+  - `app/api/cron/step-down/route.ts`
+  - 週1回（日曜20時JST）実行
+- [x] **C-04: 生存確認通知** ✅
+  - `app/api/cron/survival-check/route.ts`
+  - 4時間おき（8, 12, 16, 20時JST）実行
+
+##### Cron基盤 ✅
+- [x] **lib/cron/utils.ts** - Cronユーティリティ
+  - `verifyCronRequest()` - CRON_SECRET検証
+  - `getUsersWithPushSubscriptions()` - 購読ユーザー取得
+  - `getInactiveUsers()` - 未記録ユーザー検出
+  - `getUserDailyStats()` - 日次統計取得
+  - `sendNotificationToUser()` - 通知送信
+- [x] **vercel.json** - Cron Job設定
+  - 4つのスケジュール設定
+
+##### 必要な環境変数（Phase 3追加分）
+```.env
+# Gemini API
+GEMINI_API_KEY=your_gemini_api_key
+NEXT_PUBLIC_GEMINI_MODEL=gemini-2.0-flash-exp
+
+# Firebase Admin SDK
+FIREBASE_ADMIN_PROJECT_ID=your_project_id
+FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your_project_id.iam.gserviceaccount.com
+FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
+# Push Notifications
+NEXT_PUBLIC_FIREBASE_VAPID_KEY=your_vapid_public_key
+
+# Cron Jobs
+CRON_SECRET=your_random_secret_string
+```
+
+#### Phase 4: テスト・最適化（次のフェーズ）
 - [ ] Playwrightテスト
 - [ ] パフォーマンス最適化
 - [ ] アクセシビリティ監査
@@ -568,21 +660,30 @@ Phase 1のすべての機能が実装完了しました：
 
 ## 次のステップ
 
-### 即座に開始可能
-1. **Firebase プロジェクト作成**
-   - Firebase Console でプロジェクト作成
-   - Authentication, Firestore, FCM 設定
-   - `.env.local` ファイル作成（`docs/setup-guide.md` 参照）
+### Phase 4 開始前に必要な作業
+1. **環境変数の設定確認**
+   - Firebase Admin SDK（`docs/firebase-push-setup.md` 参照）
+   - Gemini API Key
+   - CRON_SECRET（Vercel Cron用）
 
-2. **SOS機能実装**
-   - 3分タイマーページ
-   - 深呼吸ガイドページ
-   - AI励ましメッセージ統合
+2. **Vercel デプロイ確認**
+   - Cron Jobs の動作確認
+   - 本番環境での通知テスト
 
-3. **履歴ページ実装**
-   - 日別記録一覧
-   - 統計グラフ
-   - フィルタリング機能
+### Phase 4 タスク
+1. **Playwrightテスト作成**
+   - 認証フロー
+   - 記録機能
+   - SOS機能
+   - 履歴ページ
+
+2. **パフォーマンス最適化**
+   - Core Web Vitals改善
+   - バンドルサイズ削減
+
+3. **セキュリティ・アクセシビリティ**
+   - セキュリティレビュー
+   - WCAG AA準拠確認
 
 ### 開発コマンド
 ```bash

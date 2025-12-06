@@ -2,7 +2,7 @@
 
 ## 現在の状況
 
-✅ **Phase 1 完全完了 + Phase 2 PWA設定 部分完了！**（2025-12-03更新）
+✅ **Phase 1～3 完全完了！**（2025-12-07更新）
 
 以下の機能が実装されています:
 
@@ -46,7 +46,7 @@
    - UserSettings, NotificationSettings, GoalSettings
    - SituationTag（10種類の状況タグ）
 
-#### Phase 2: PWA設定（部分完了）
+#### Phase 2: PWA設定（完了）
 
 7. **PWA基盤**
    - PWAアイコン（72px〜512px、8サイズ）
@@ -55,6 +55,38 @@
    - manifest.json（maskableアイコン対応）
    - Service Worker（Workboxキャッシュ戦略）
    - オフラインフォールバックページ
+
+8. **iOSインストールガイド（E-02）**
+   - useInstallPrompt.ts（PWAインストール状態検出）
+   - InstallGuide.tsx（4ステップ視覚ガイド）
+   - InstallPromptBanner.tsx（ダッシュボードバナー）
+
+#### Phase 3: Web Push通知・AI機能（完了）
+
+9. **Push通知基盤**
+   - Firebase Admin SDK（lib/firebase/admin.ts）
+   - FCM Service Worker（firebase-messaging-sw.js）
+   - 購読管理（lib/push/subscription.ts）
+   - 通知許可UI（PushPermissionPrompt.tsx）
+   - usePushPermission.ts フック
+
+10. **Gemini AI連携**
+    - AIクライアント（lib/ai/client.ts）
+    - プロンプトテンプレート（lib/ai/prompts.ts）
+    - コーチングサービス（lib/ai/coaching.ts）
+    - コーチングAPI（app/api/coaching/route.ts）
+    - useCoaching.ts フック
+
+11. **AIコーチング機能**
+    - D-03: SOS AI励ましメッセージ
+    - C-01: モーニング・ブリーフィング（毎朝7時JST）
+    - C-02: 魔の時間帯アラート（5回/日）
+    - C-03: ステップダウン提案（週1回）
+    - C-04: 生存確認通知（4回/日）
+
+12. **Cron基盤**
+    - vercel.json（4つのスケジュール設定）
+    - lib/cron/utils.ts（共通ユーティリティ）
 
 ### データフロー
 
@@ -98,6 +130,17 @@ DailySummary自動更新
 2. ロケーション: `asia-northeast1` (東京) を選択
 3. セキュリティルール: まず「テストモードで開始」を選択（後で本番用に変更）
 
+**セキュリティルールのデプロイ**:
+
+プロジェクトルートに `firestore.rules` ファイルが用意されています。以下の手順でデプロイしてください:
+
+1. Firebase Console > Firestore Database > Rules タブを開く
+2. `firestore.rules` ファイルの内容をコピー
+3. Firebase Console のエディタに貼り付け
+4. 「公開」をクリック
+
+このルールにより、各ユーザーは自分のデータのみ読み書き可能になります（セキュアな設定）。
+
 ### 4. Firebase Cloud Messaging の設定（Web Push用）
 
 1. Firebase Console > Project Settings > Cloud Messaging
@@ -140,7 +183,30 @@ CRON_SECRET=your-random-secret
 
 **重要**: `.env.local` ファイルは `.gitignore` に含まれているため、Gitにコミットされません。
 
-### 7. 開発サーバーの起動
+### 7. Firebase接続テスト（推奨）
+
+環境変数とFirebase設定が正しいか確認するテストスクリプトを実行:
+
+```bash
+npm run test:firebase
+```
+
+このコマンドで以下がテストされます:
+- ✅ 環境変数の存在確認
+- ✅ Firebase初期化
+- ✅ 匿名認証
+- ✅ Firestoreへの読み書き
+
+**成功例**:
+```
+✅ すべてのテストが成功しました！
+```
+
+**エラーが出た場合**:
+- `PERMISSION_DENIED` → Firestoreセキュリティルールをデプロイしてください（上記の手順3参照）
+- `Missing configuration` → `.env.local` の値を確認してください
+
+### 8. 開発サーバーの起動
 
 ```bash
 npm run dev
@@ -148,7 +214,7 @@ npm run dev
 
 ブラウザで http://localhost:3000 にアクセス
 
-### 8. 動作確認
+### 9. 動作確認
 
 1. トップページ（/）にアクセス → サインインページにリダイレクト
 2. 「匿名で始める」をクリック → 認証成功 → ダッシュボードにリダイレクト
@@ -159,24 +225,14 @@ npm run dev
 
 ## 残りのタスク
 
-### Phase 2 残タスク
-- [ ] iOSインストール誘導UI（E-02）
-- [ ] iOSスプラッシュスクリーン
-
-### Phase 3: Web Push通知 + AI
-- [ ] Web Push通知機能（FCM）
-- [ ] Gemini AIコーチング機能
-- [ ] モーニング・ブリーフィング（C-01）
-- [ ] 魔の時間帯アラート（C-02）
-- [ ] ステップダウン提案（C-03）
-- [ ] 生存確認通知（C-04）
-- [ ] Vercel Cron Jobs設定
-
-### Phase 4: テスト・最適化
+### Phase 4: テスト・最適化（次のフェーズ）
 - [ ] E2Eテスト（Playwright）
 - [ ] パフォーマンス最適化
 - [ ] アクセシビリティ監査
 - [ ] セキュリティレビュー
+
+### オプションタスク
+- [ ] iOSスプラッシュスクリーン（後回し）
 
 ## トラブルシューティング
 
@@ -204,9 +260,18 @@ npm run dev
 
 ## 次の開発ステップ
 
-1. **iOSインストール誘導UI（E-02）** - ホーム画面追加ガイド
-2. **Web Push通知設定** - FCM統合
-3. **Gemini AI統合** - AIコーチング機能
+Phase 3が完了し、すべての主要機能が実装されました。次のステップは：
+
+1. **Phase 4: テスト・最適化**
+   - Playwrightによる E2Eテスト
+   - パフォーマンス最適化（Core Web Vitals改善）
+   - アクセシビリティ監査（WCAG AA準拠確認）
+   - セキュリティレビュー
+
+2. **本番デプロイ準備**
+   - 環境変数の設定確認（Gemini API、Firebase Admin SDK、CRON_SECRET）
+   - Vercel Cron Jobsの動作確認
+   - 本番環境での通知テスト
 
 詳細は `docs/development-plan.md` を参照してください。
 
@@ -228,6 +293,23 @@ npm run lint
 # テスト
 npm run test
 npm run test:e2e
+
+# Firebase接続テスト
+npm run test:firebase
 ```
 
 **注意**: 本番ビルドでは `--webpack` フラグが必要です（`@ducanh2912/next-pwa` がTurbopack非互換のため）。
+
+## 作成されたファイル
+
+このセットアップで以下のファイルが追加されています:
+
+### セキュリティ関連
+- **firestore.rules** - Firestoreセキュリティルール（Firebase Consoleにデプロイ必要）
+
+### テスト関連
+- **scripts/test-firebase.ts** - Firebase接続テストスクリプト
+  - 環境変数の検証
+  - Firebase初期化テスト
+  - Authentication機能テスト
+  - Firestore読み書きテスト

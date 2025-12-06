@@ -1,0 +1,54 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ユーザーコレクション: 認証済みユーザーのみ自分のドキュメントにアクセス可能
+    match /users/{userId} {
+      // ユーザーは自分のプロフィールのみ読み書き可能
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // 喫煙記録サブコレクション
+      match /records/{recordId} {
+        // ユーザーは自分の記録のみ読み書き可能
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // 日次サマリーサブコレクション
+      match /summaries/{summaryId} {
+        // ユーザーは自分のサマリーのみ読み書き可能
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ユーザー設定サブコレクション
+      match /settings/{settingId} {
+        // ユーザーは自分の設定のみ読み書き可能
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Push通知サブスクリプションサブコレクション
+      match /subscriptions/{subscriptionId} {
+        // ユーザーは自分のサブスクリプションのみ読み書き可能
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // SOSセッションサブコレクション
+      match /sos-sessions/{sessionId} {
+        // ユーザーは自分のSOSセッションのみ読み書き可能
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // グローバル設定コレクション（管理者のみ）
+    match /global-settings/{document=**} {
+      allow read: if true; // 全員が読み取り可能
+      allow write: if false; // 書き込みは不可（管理者がコンソールから設定）
+    }
+
+    // コーチングメッセージテンプレート（全員読み取り可能）
+    match /coaching-templates/{templateId} {
+      allow read: if true; // 全員が読み取り可能
+      allow write: if false; // 書き込みは不可（管理者がコンソールから設定）
+    }
+  }
+}

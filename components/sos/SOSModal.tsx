@@ -1,9 +1,10 @@
 'use client';
 
-import { FC } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import { useSOSCoaching } from '@/hooks/useCoaching';
 
 interface SOSModalProps {
   isOpen: boolean;
@@ -11,12 +12,51 @@ interface SOSModalProps {
   onRecordCraving: () => void;
 }
 
+// Fallback static messages when AI is unavailable
+const FALLBACK_MESSAGES = [
+  '今が頑張りどころです。この衝動は必ず過ぎ去ります。一緒に乗り越えましょう。',
+  'つらいよね。でも、ここまで頑張ってきたあなたなら大丈夫。深呼吸してみて。',
+  'その衝動は必ず過ぎ去るよ。3分だけ待ってみよう。',
+];
+
 export const SOSModal: FC<SOSModalProps> = ({
   isOpen,
   onClose,
   onRecordCraving,
 }) => {
   const router = useRouter();
+  const { getEncouragement, isLoading: aiLoading, clearMessage } = useSOSCoaching();
+  const [message, setMessage] = useState<string>('');
+  const [isLoadingMessage, setIsLoadingMessage] = useState(false);
+
+  // Fetch AI encouragement when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoadingMessage(true);
+      getEncouragement()
+        .then((result) => {
+          if (result?.message) {
+            setMessage(result.message);
+          } else {
+            // Use random fallback message
+            const randomIndex = Math.floor(Math.random() * FALLBACK_MESSAGES.length);
+            setMessage(FALLBACK_MESSAGES[randomIndex]);
+          }
+        })
+        .catch(() => {
+          // Use random fallback message on error
+          const randomIndex = Math.floor(Math.random() * FALLBACK_MESSAGES.length);
+          setMessage(FALLBACK_MESSAGES[randomIndex]);
+        })
+        .finally(() => {
+          setIsLoadingMessage(false);
+        });
+    } else {
+      // Reset when modal closes
+      setMessage('');
+      clearMessage();
+    }
+  }, [isOpen, getEncouragement, clearMessage]);
 
   const handleTimer = () => {
     onClose();
@@ -41,14 +81,20 @@ export const SOSModal: FC<SOSModalProps> = ({
       size="md"
     >
       <div className="space-y-6">
-        {/* メッセージ */}
+        {/* AI Coaching Message */}
         <div className="text-center">
           <div className="text-5xl mb-4">💪</div>
-          <p className="text-lg text-neutral-700 dark:text-neutral-300 leading-relaxed">
-            今が頑張りどころです。<br />
-            この衝動は必ず過ぎ去ります。<br />
-            一緒に乗り越えましょう。
-          </p>
+          {isLoadingMessage || aiLoading ? (
+            <div className="flex items-center justify-center gap-2 py-4">
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          ) : (
+            <p className="text-lg text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-line">
+              {message}
+            </p>
+          )}
         </div>
 
         {/* SOS Options */}

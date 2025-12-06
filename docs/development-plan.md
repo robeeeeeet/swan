@@ -495,31 +495,57 @@ interface SyncQueueItem {
 
 ---
 
-### Phase 3: Web Push通知 + AIコーチング（Week 4後半-6）
+### Phase 3: Web Push通知 + AIコーチング ✅ 完了（2025-12-06）
 
 **目標:** Push通知とAI機能による能動的サポート
 
-| タスク | 成果物 |
-|--------|--------|
-| Push通知基盤構築（FCM, VAPID） | Push購読機能 |
-| 通知許可誘導UI実装（E-01） | 許可フロー |
-| Gemini API連携基盤 | AI接続 |
-| AI励ましメッセージ実装（D-03強化） | AI励まし機能 |
-| モーニング・ブリーフィング実装（C-01） | 朝通知機能 |
-| Vercel Cron設定 | 定期実行設定 |
-| 魔の時間帯予測ロジック実装 | 予測アルゴリズム |
-| 魔の時間帯アラート実装（C-02） | 先回り通知機能 |
-| 生存確認通知実装（C-04） | リマインド通知 |
-| ステップダウン提案実装（C-03） | 目標調整機能 |
+| タスク | 成果物 | 状態 |
+|--------|--------|------|
+| Push通知基盤構築（FCM, VAPID） | `lib/firebase/admin.ts`, `lib/push/subscription.ts` | ✅ 完了 |
+| 通知許可誘導UI実装（E-01） | `components/pwa/PushPermissionPrompt.tsx` | ✅ 完了 |
+| Gemini API連携基盤 | `lib/ai/client.ts` | ✅ 完了 |
+| AI励ましメッセージ実装（D-03強化） | `components/sos/SOSModal.tsx` 更新 | ✅ 完了 |
+| モーニング・ブリーフィング実装（C-01） | `app/api/cron/morning-briefing/route.ts` | ✅ 完了 |
+| Vercel Cron設定 | `vercel.json` | ✅ 完了 |
+| 魔の時間帯予測ロジック実装 | `lib/ai/coaching.ts` - getTypicalCravingHours | ✅ 完了 |
+| 魔の時間帯アラート実装（C-02） | `app/api/cron/craving-alert/route.ts` | ✅ 完了 |
+| 生存確認通知実装（C-04） | `app/api/cron/survival-check/route.ts` | ✅ 完了 |
+| ステップダウン提案実装（C-03） | `app/api/cron/step-down/route.ts` | ✅ 完了 |
+
+**Phase 3 実装詳細（2025-12-06）:**
+
+##### Push通知基盤
+- **lib/firebase/admin.ts** - Firebase Admin SDK初期化
+  - `getAdminMessaging()` - FCMインスタンス取得
+  - `sendPushNotification()` - 単一デバイス送信
+  - `sendSwanNotification()` - Swan専用通知送信
+- **public/firebase-messaging-sw.js** - FCM Service Worker
+- **lib/push/subscription.ts** - プッシュ購読管理
+  - `isPushNotificationSupported()` - ブラウザサポート確認
+  - `getFCMToken()` - FCMトークン取得
+  - `subscribeToPushNotifications()` - 購読フロー
+- **hooks/usePushPermission.ts** - 通知許可フック（7状態管理）
+- **components/pwa/PushPermissionPrompt.tsx** - 許可UI（3バリアント）
+
+##### Gemini AI連携
+- **lib/ai/client.ts** - `@google/genai` SDK使用
+- **lib/ai/prompts.ts** - 6種類のプロンプト + フォールバック
+- **lib/ai/coaching.ts** - コーチングサービス
+- **app/api/coaching/route.ts** - コーチングAPI
+- **hooks/useCoaching.ts** - コーチングフック
+
+##### Cron Jobs
+- **vercel.json** - 4つのスケジュール設定
+- **lib/cron/utils.ts** - Cronユーティリティ
 
 **Phase 3 完了時の機能:**
-- Phase 2 の全機能
-- Web Push通知（iOS Safari含む）
-- モーニング・ブリーフィング
-- 魔の時間帯アラート
-- AI励ましメッセージ
-- 入力忘れリマインド
-- 目標自動調整提案
+- ✅ Phase 2 の全機能
+- ✅ Web Push通知（iOS Safari含む）
+- ✅ モーニング・ブリーフィング（C-01）
+- ✅ 魔の時間帯アラート（C-02）
+- ✅ AI励ましメッセージ（D-03）
+- ✅ 入力忘れリマインド（C-04）
+- ✅ 目標自動調整提案（C-03）
 
 ---
 
@@ -738,6 +764,7 @@ CRON_SECRET=
 
 | バージョン | 日付 | 変更内容 |
 |-----------|------|---------|
+| 1.5.0 | 2025-12-07 | Phase 3完了（Web Push通知、Gemini AI連携、Cron Jobs、AIコーチング機能） |
 | 1.4.0 | 2025-12-03 | Phase 2 PWA設定完了（Service Worker、オフラインページ、アイコン設定） |
 | 1.3.0 | 2025-12-01 | date-fns採用（タイムゾーン対応強化）、Phase 1バグ修正完了 |
 | 1.2.0 | 2025-11-30 | Phase 1完全完了（設定ページ実装）、実装進捗レポート更新 |

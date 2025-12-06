@@ -12,6 +12,7 @@ import RecordButton from '@/components/dashboard/RecordButton';
 import RandomTip from '@/components/dashboard/RandomTip';
 import { AchievementPanel } from '@/components/dashboard/AchievementPanel';
 import { InstallPromptBanner } from '@/components/install/InstallPromptBanner';
+import { PushPermissionPrompt } from '@/components/pwa/PushPermissionPrompt';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { SOSModal } from '@/components/sos/SOSModal';
@@ -168,6 +169,9 @@ export default function DashboardPage() {
         {shouldShowGuide && (
           <InstallPromptBanner onDismiss={dismissGuide} />
         )}
+
+        {/* Push Notification Permission Prompt */}
+        <PushPermissionPrompt variant="banner" />
 
         {/* Goal Header */}
         <GoalHeader dailyGoal={dailyGoal} smokedToday={smokedCount} />
