@@ -68,11 +68,27 @@ service cloud.firestore {
       match /sos-sessions/{sessionId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+
+      // Tip評価サブコレクション
+      // パス: users/{userId}/tipRatings/{tipId}
+      match /tipRatings/{tipId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // ============================================================================
     // グローバルコレクション
     // ============================================================================
+
+    // グローバルTip評価コレクション
+    // パス: globalTipRatings/{tipId}
+    // 全ユーザーの評価を集計したデータ
+    match /globalTipRatings/{tipId} {
+      // 認証済みユーザーは読み取り可能
+      allow read: if request.auth != null;
+      // 認証済みユーザーは書き込み可能（トランザクションで集計更新）
+      allow write: if request.auth != null;
+    }
 
     // グローバル設定コレクション（管理者のみ）
     match /global-settings/{document=**} {

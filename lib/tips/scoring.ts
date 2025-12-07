@@ -9,6 +9,7 @@
 import { TipRating, TipWithScore } from '@/types';
 import { Tip, TIPS, getAvailableTips, TimeSlot, DayType } from '@/constants/tips';
 import { getAllTipRatings } from '@/lib/indexeddb';
+import { getGlobalTipRatings, getPersonalTipRatings, GlobalTipRating, PersonalTipRating } from '@/lib/firebase/tipRatings';
 
 /**
  * Calculate Wilson Score Lower Bound
@@ -205,7 +206,7 @@ export async function getWeightedRandomTip(
 }
 
 /**
- * Get all tips with their scores for analysis/debugging
+ * Get all tips with their scores for analysis/debugging (from IndexedDB - local)
  */
 export async function getAllTipsWithScores(): Promise<(Tip & TipWithScore)[]> {
   const ratings = await getAllTipRatings();
@@ -228,4 +229,96 @@ export async function getAllTipsWithScores(): Promise<(Tip & TipWithScore)[]> {
       totalRatings: score?.totalRatings ?? 0,
     };
   });
+}
+
+/**
+ * Get all tips with global scores (from Firestore - all users)
+ */
+export async function getAllTipsWithGlobalScores(): Promise<(Tip & TipWithScore & { totalUsers: number })[]> {
+  try {
+    const globalRatings = await getGlobalTipRatings();
+
+    const ratingMap = new Map<number, GlobalTipRating>();
+    for (const rating of globalRatings) {
+      ratingMap.set(rating.tipId, rating);
+    }
+
+    return TIPS.map((tip) => {
+      const rating = ratingMap.get(tip.id);
+      const goodCount = rating?.goodCount ?? 0;
+      const badCount = rating?.badCount ?? 0;
+      const totalRatings = goodCount + badCount;
+      const wilsonScore = calculateWilsonScore(goodCount, badCount);
+      const weight = calculateWeight(wilsonScore);
+
+      return {
+        ...tip,
+        tipId: tip.id,
+        wilsonScore,
+        weight,
+        goodCount,
+        badCount,
+        totalRatings,
+        totalUsers: rating?.totalUsers ?? 0,
+      };
+    });
+  } catch (error) {
+    console.error('Failed to get global tip scores:', error);
+    // Fallback to empty scores
+    return TIPS.map((tip) => ({
+      ...tip,
+      tipId: tip.id,
+      wilsonScore: 0.5,
+      weight: 0.65,
+      goodCount: 0,
+      badCount: 0,
+      totalRatings: 0,
+      totalUsers: 0,
+    }));
+  }
+}
+
+/**
+ * Get all tips with personal scores from Firestore (for specific user)
+ */
+export async function getAllTipsWithPersonalScores(userId: string): Promise<(Tip & TipWithScore)[]> {
+  try {
+    const personalRatings = await getPersonalTipRatings(userId);
+
+    const ratingMap = new Map<number, PersonalTipRating>();
+    for (const rating of personalRatings) {
+      ratingMap.set(rating.tipId, rating);
+    }
+
+    return TIPS.map((tip) => {
+      const rating = ratingMap.get(tip.id);
+      const goodCount = rating?.goodCount ?? 0;
+      const badCount = rating?.badCount ?? 0;
+      const totalRatings = goodCount + badCount;
+      const wilsonScore = calculateWilsonScore(goodCount, badCount);
+      const weight = calculateWeight(wilsonScore);
+
+      return {
+        ...tip,
+        tipId: tip.id,
+        wilsonScore,
+        weight,
+        goodCount,
+        badCount,
+        totalRatings,
+      };
+    });
+  } catch (error) {
+    console.error('Failed to get personal tip scores:', error);
+    // Fallback to empty scores
+    return TIPS.map((tip) => ({
+      ...tip,
+      tipId: tip.id,
+      wilsonScore: 0.5,
+      weight: 0.65,
+      goodCount: 0,
+      badCount: 0,
+      totalRatings: 0,
+    }));
+  }
 }

@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
 import { getWeightedRandomTip, type Tip, getCurrentTimeSlot, getCurrentDayType } from '@/lib/tips';
 import { addTipRating, getTipRating } from '@/lib/indexeddb';
+import { addTipRatingToFirestore } from '@/lib/firebase/tipRatings';
+import { useAuth } from '@/hooks/useAuth';
 import { TipRatingType, TipRating } from '@/types';
 
 /**
@@ -34,6 +36,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
  * - Smooth fade-in animation on tip change
  */
 function RandomTipComponent() {
+  const { user } = useAuth();
   const [tip, setTip] = useState<Tip | null>(null);
   const [key, setKey] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -84,10 +87,21 @@ function RandomTipComponent() {
       if (!tip || hasRated) return;
 
       try {
+        // IndexedDB（ローカル）に保存
         const updatedRating = await addTipRating(tip.id, rating);
         setCurrentRating(updatedRating);
         setHasRated(true);
         setRatingFeedback(rating);
+
+        // Firestore（クラウド）にも保存（ユーザーがログインしている場合）
+        if (user?.uid) {
+          try {
+            await addTipRatingToFirestore(user.uid, tip.id, rating);
+          } catch (firestoreError) {
+            // Firestoreへの保存失敗は致命的ではないのでログのみ
+            console.warn('Failed to save rating to Firestore:', firestoreError);
+          }
+        }
 
         // フィードバック表示後、次のTipを取得
         setTimeout(() => {
@@ -97,7 +111,7 @@ function RandomTipComponent() {
         console.error('Failed to save rating:', error);
       }
     },
-    [tip, hasRated, handleRefresh]
+    [tip, hasRated, handleRefresh, user?.uid]
   );
 
   // 初期化

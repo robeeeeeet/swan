@@ -433,10 +433,72 @@ TIP_RATINGS: 'tipRatings'       // 評価データ
 TIP_RATING_HISTORY: 'tipRatingHistory' // 評価履歴（分析用）
 ```
 
+#### ~~設計判断~~ **更新: 2025-12-07**
+1. ~~**ローカルオンリー**: 評価データはFirestoreに同期しない~~
+   ~~- 理由: プライバシー（どのTipsを評価したかは個人情報）~~
+   ~~- 理由: シンプルさ（同期ロジック不要）~~
+
+### デュアルストレージパターン（2025-12-07 NEW!）
+
+Tips評価データはIndexedDB（ローカル）とFirestore（クラウド）の両方に保存する「デュアルストレージ」パターンを採用。
+
+#### 変更理由
+1. **グローバルランキング需要**: ユーザーから「みんなの人気Tips」を見たい要望
+2. **集合知の活用**: 全ユーザーの評価を集計して、より良いTips推薦を実現
+
+#### Firestoreコレクション設計
+```
+globalTipRatings/{tipId}           # グローバル集計
+├── tipId: number
+├── goodCount: number              # 全ユーザーのGood合計
+├── badCount: number               # 全ユーザーのBad合計
+├── totalUsers: number             # 評価したユーザー数
+└── lastUpdatedAt: Timestamp
+
+users/{userId}/tipRatings/{tipId}  # 個人の評価
+├── tipId: number
+├── goodCount: number              # このユーザーのGood回数
+├── badCount: number               # このユーザーのBad回数
+└── lastRatedAt: Timestamp
+```
+
+#### トランザクション設計
+```typescript
+// lib/firebase/tipRatings.ts
+await runTransaction(db, async (transaction) => {
+  // 1. 個人評価を更新
+  transaction.set(personalRef, newPersonal);
+  
+  // 2. グローバル集計をアトミックに更新
+  transaction.update(globalRef, {
+    goodCount: increment(rating === 'good' ? 1 : 0),
+    badCount: increment(rating === 'bad' ? 1 : 0),
+    totalUsers: isFirstRating ? increment(1) : increment(0),
+  });
+});
+```
+
 #### 設計判断
-1. **ローカルオンリー**: 評価データはFirestoreに同期しない
-   - 理由: プライバシー（どのTipsを評価したかは個人情報）
-   - 理由: シンプルさ（同期ロジック不要）
+1. **トランザクション採用**: 個人評価とグローバル集計を原子的に更新
+2. **increment()使用**: 読み取り→書き込み競合を防ぐ
+3. **totalUsers管理**: 初回評価時のみインクリメント（重複カウント防止）
+4. **IndexedDBとの併用**: オフライン時はIndexedDBのみに保存、Firestoreは失敗しても致命的ではない
+
+#### セキュリティルール（firestore.rules）
+```
+// グローバルTip評価
+match /globalTipRatings/{tipId} {
+  allow read: if request.auth != null;
+  allow write: if request.auth != null;
+}
+
+// 個人Tip評価（サブコレクション）
+match /users/{userId}/tipRatings/{tipId} {
+  allow read, write: if request.auth != null && request.auth.uid == userId;
+}
+```
+
+#### 設計判断（ストレージ戦略）
 2. **履歴保持**: 全評価履歴を保持（将来のパターン分析用）
 3. **キー設計**: `tipId` をキーにして高速アクセス
 

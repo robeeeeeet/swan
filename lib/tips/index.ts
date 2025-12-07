@@ -12,6 +12,8 @@ export {
   weightedRandomSelect,
   getWeightedRandomTip,
   getAllTipsWithScores,
+  getAllTipsWithGlobalScores,
+  getAllTipsWithPersonalScores,
 } from './scoring';
 
 // Re-export from constants for convenience

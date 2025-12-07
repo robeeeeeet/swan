@@ -145,13 +145,15 @@ swan/
 │   ├── firebase/
 │   │   ├── config.ts       ✅ 実装済み
 │   │   ├── auth.ts         ✅ 実装済み
-│   │   └── firestore.ts    ✅ 実装済み（CRUD操作フル実装）
+│   │   ├── firestore.ts    ✅ 実装済み（CRUD操作フル実装）
+│   │   └── tipRatings.ts   ✅ Tips評価Firestoreストレージ（2025-12-07）
 │   ├── indexeddb/          # IndexedDB（オフライン用）✅ 実装済み
 │   │   ├── db.ts           ✅ スキーマ定義・DB初期化
 │   │   ├── records.ts      ✅ 喫煙記録CRUD
 │   │   ├── summaries.ts    ✅ サマリーCRUD
 │   │   ├── settings.ts     ✅ 設定CRUD
 │   │   ├── sync.ts         ✅ 同期キュー管理
+│   │   ├── tipRatings.ts   ✅ Tips評価ストレージ（2025-12-07）
 │   │   └── index.ts        ✅ 統合データレイヤー（offline-first）
 │   ├── push/
 │   │   ├── config.ts
@@ -159,6 +161,9 @@ swan/
 │   ├── ai/
 │   │   ├── gemini.ts
 │   │   └── prompts.ts
+│   ├── tips/               ✅ 実装済み（2025-12-07）
+│   │   ├── scoring.ts      ✅ Wilson Score、重み付け選択
+│   │   └── index.ts        ✅ エクスポート
 │   └── utils/
 │       ├── date.ts         ✅ 実装済み（date-fns使用、タイムゾーン対応）
 │       └── summary.ts      ✅ 実装済み（統計計算・フォーマット）
@@ -768,7 +773,8 @@ CRON_SECRET=
 
 | バージョン | 日付 | 変更内容 |
 |-----------|------|---------|
-| 1.5.0 | 2025-12-07 | Phase 3完了（Web Push通知、Gemini AI連携、Cron Jobs、AIコーチング機能） |
+| 1.6.0 | 2025-12-07 | Tips評価システム（Wilson Score、デュアルストレージ、グローバルランキング）追加 |
+| 1.5.0 | 2025-12-06 | Phase 3完了（Web Push通知、Gemini AI連携、Cron Jobs、AIコーチング機能） |
 | 1.4.0 | 2025-12-03 | Phase 2 PWA設定完了（Service Worker、オフラインページ、アイコン設定） |
 | 1.3.0 | 2025-12-01 | date-fns採用（タイムゾーン対応強化）、Phase 1バグ修正完了 |
 | 1.2.0 | 2025-11-30 | Phase 1完全完了（設定ページ実装）、実装進捗レポート更新 |

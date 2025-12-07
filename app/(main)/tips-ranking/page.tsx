@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
-import { getAllTipsWithScores, type Tip, getAllCategories, type TipCategory } from '@/lib/tips';
+import { getAllTipsWithScores, getAllTipsWithGlobalScores, type Tip, getAllCategories, type TipCategory } from '@/lib/tips';
+import { useAuth } from '@/hooks/useAuth';
 import { TipWithScore } from '@/types';
 import Link from 'next/link';
 
@@ -19,6 +20,21 @@ const CATEGORY_EMOJI: Record<string, string> = {
   '食事・栄養': '🥗',
   'コミュニケーション': '💬',
   '急速休息': '😴',
+};
+
+/**
+ * カテゴリー名の短縮表示（モバイルUI用）
+ */
+const CATEGORY_SHORT_NAME: Record<string, string> = {
+  '感覚刺激': '感覚',
+  '呼吸法': '呼吸',
+  '代替行動': '代替',
+  '心理・認知': '心理',
+  '運動': '運動',
+  '環境調整': '環境',
+  '食事・栄養': '食事',
+  'コミュニケーション': '相談',
+  '急速休息': '休息',
 };
 
 /**
@@ -78,18 +94,28 @@ function RatingBar({ goodCount, badCount }: { goodCount: number; badCount: numbe
 }
 
 type SortType = 'popular' | 'rating' | 'total';
+type RankingScope = 'personal' | 'global';
 
 export default function TipsRankingPage() {
-  const [tips, setTips] = useState<(Tip & TipWithScore)[]>([]);
+  const { user } = useAuth();
+  const [tips, setTips] = useState<(Tip & TipWithScore & { totalUsers?: number })[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortType>('popular');
   const [filterCategory, setFilterCategory] = useState<TipCategory | 'all'>('all');
   const [categories, setCategories] = useState<TipCategory[]>([]);
+  const [scope, setScope] = useState<RankingScope>('global');
 
   // データ取得
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (rankingScope: RankingScope) => {
+    setLoading(true);
     try {
-      const allTips = await getAllTipsWithScores();
+      let allTips;
+      if (rankingScope === 'global') {
+        allTips = await getAllTipsWithGlobalScores();
+      } else {
+        // 個人はローカル（IndexedDB）から取得
+        allTips = await getAllTipsWithScores();
+      }
       setTips(allTips);
       setCategories(getAllCategories());
     } catch (error) {
@@ -100,8 +126,13 @@ export default function TipsRankingPage() {
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchData(scope);
+  }, [fetchData, scope]);
+
+  // スコープ切り替え
+  const handleScopeChange = (newScope: RankingScope) => {
+    setScope(newScope);
+  };
 
   // ソート処理
   const sortedTips = [...tips]
@@ -164,7 +195,9 @@ export default function TipsRankingPage() {
                 Tips人気ランキング
               </h1>
               <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                みんなが役立つと思ったTips
+                {scope === 'global'
+                  ? 'みんなが役立つと思ったTips'
+                  : 'あなたが高評価したTips'}
               </p>
             </div>
           </div>
@@ -172,6 +205,32 @@ export default function TipsRankingPage() {
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6 space-y-6">
+        {/* スコープ切り替えタブ */}
+        <div className="flex bg-neutral-100 dark:bg-neutral-800 rounded-xl p-1">
+          <button
+            onClick={() => handleScopeChange('global')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+              scope === 'global'
+                ? 'bg-white dark:bg-neutral-700 text-teal-600 dark:text-teal-400 shadow-sm'
+                : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
+            }`}
+          >
+            <span>🌍</span>
+            <span>みんなの人気</span>
+          </button>
+          <button
+            onClick={() => handleScopeChange('personal')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+              scope === 'personal'
+                ? 'bg-white dark:bg-neutral-700 text-teal-600 dark:text-teal-400 shadow-sm'
+                : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
+            }`}
+          >
+            <span>👤</span>
+            <span>あなたの評価</span>
+          </button>
+        </div>
+
         {/* 統計サマリー */}
         <Card variant="default" padding="md">
           <CardContent>
@@ -180,7 +239,9 @@ export default function TipsRankingPage() {
                 <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">
                   {stats.totalRatings}
                 </div>
-                <div className="text-xs text-neutral-500">総評価数</div>
+                <div className="text-xs text-neutral-500">
+                  {scope === 'global' ? '総評価数' : 'あなたの評価'}
+                </div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-green-600 dark:text-green-400">
@@ -234,32 +295,39 @@ export default function TipsRankingPage() {
             </button>
           </div>
 
-          {/* カテゴリーフィルター */}
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
-            <button
-              onClick={() => setFilterCategory('all')}
-              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                filterCategory === 'all'
-                  ? 'bg-neutral-800 dark:bg-white text-white dark:text-neutral-800'
-                  : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
-              }`}
-            >
-              すべて
-            </button>
-            {categories.map((category) => (
+          {/* カテゴリーフィルター - 2行グリッド */}
+          <div className="bg-neutral-50 dark:bg-neutral-900 rounded-2xl p-3">
+            <div className="grid grid-cols-5 gap-2">
+              {/* すべてボタン */}
               <button
-                key={category}
-                onClick={() => setFilterCategory(category)}
-                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
-                  filterCategory === category
-                    ? 'bg-neutral-800 dark:bg-white text-white dark:text-neutral-800'
-                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
+                onClick={() => setFilterCategory('all')}
+                className={`flex flex-col items-center justify-center p-2.5 rounded-xl transition-all min-h-[60px] ${
+                  filterCategory === 'all'
+                    ? 'bg-neutral-800 dark:bg-white text-white dark:text-neutral-800 shadow-lg'
+                    : 'bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 shadow-sm'
                 }`}
               >
-                <span>{CATEGORY_EMOJI[category]}</span>
-                <span>{category}</span>
+                <span className="text-xl">📋</span>
+                <span className="text-[11px] font-medium mt-1">全て</span>
               </button>
-            ))}
+              {/* カテゴリーボタン */}
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setFilterCategory(category)}
+                  className={`flex flex-col items-center justify-center p-2.5 rounded-xl transition-all min-h-[60px] ${
+                    filterCategory === category
+                      ? 'bg-teal-500 text-white shadow-lg'
+                      : 'bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 shadow-sm'
+                  }`}
+                >
+                  <span className="text-xl">{CATEGORY_EMOJI[category]}</span>
+                  <span className="text-[11px] font-medium mt-1">
+                    {CATEGORY_SHORT_NAME[category] || category}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -315,8 +383,17 @@ export default function TipsRankingPage() {
 
         {/* フッター説明 */}
         <div className="text-center text-xs text-neutral-400 dark:text-neutral-500 py-4">
-          <p>ダッシュボードでTipsを評価すると</p>
-          <p>あなたに合ったTipsが表示されやすくなります</p>
+          {scope === 'global' ? (
+            <>
+              <p>ダッシュボードでTipsを評価すると</p>
+              <p>みんなのランキングに反映されます</p>
+            </>
+          ) : (
+            <>
+              <p>ダッシュボードでTipsを評価すると</p>
+              <p>あなたに合ったTipsが表示されやすくなります</p>
+            </>
+          )}
         </div>
       </main>
     </div>
