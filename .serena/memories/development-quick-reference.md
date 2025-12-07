@@ -689,9 +689,33 @@ await sendSwanNotification(token, 'morning_briefing', {
 });
 ```
 
-## Cron Jobs（NEW! 2025-12-06）
+## Cron Jobs（NEW! 2025-12-06、2025-12-07更新）
 
-### 設定ファイル: vercel.json
+### ⚠️ Vercel Hobbyプラン制限
+**重要**: Vercel Hobbyプランでは Cron Jobs が**1日1回のみ**実行可能です。
+そのため、現在は morning-briefing（朝7時JST）のみ自動実行されています。
+
+### 設定ファイル: vercel.json（現在の設定）
+```json
+{
+  "crons": [
+    { "path": "/api/cron/morning-briefing", "schedule": "0 22 * * *" }
+  ]
+}
+```
+
+### 実装済みCron APIルート
+以下のルートは実装済みですが、Hobbyプラン制限により自動実行されていません：
+
+| ジョブ | UTC | JST | 状態 |
+|--------|-----|-----|------|
+| morning-briefing | 22:00 | 07:00 | ✅ 自動実行 |
+| craving-alert | - | - | 📦 実装済み（手動のみ） |
+| survival-check | - | - | 📦 実装済み（手動のみ） |
+| step-down | - | - | 📦 実装済み（手動のみ） |
+
+### Proプランでの全Cron有効化
+Proプランにアップグレードすれば、以下の設定で全ジョブを有効化できます：
 ```json
 {
   "crons": [
@@ -702,14 +726,6 @@ await sendSwanNotification(token, 'morning_briefing', {
   ]
 }
 ```
-
-### スケジュール説明（JST換算）
-| ジョブ | UTC | JST | 頻度 |
-|--------|-----|-----|------|
-| morning-briefing | 22:00 | 07:00 | 毎日 |
-| craving-alert | 0:30,3:30... | 9:30,12:30... | 5回/日 |
-| survival-check | 23:00,3:00... | 8:00,12:00... | 4回/日 |
-| step-down | 11:00 日曜 | 20:00 日曜 | 週1回 |
 
 ### 手動テスト
 ```bash

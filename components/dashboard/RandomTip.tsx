@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, memo, useMemo } from 'react';
+import { useEffect, useState, memo, useMemo, useCallback } from 'react';
 import { getRandomTip, TIPS, type Tip } from '@/constants/tips';
 import { Card, CardContent } from '@/components/ui/Card';
 
@@ -38,6 +38,23 @@ function RandomTipComponent() {
   const [tip, setTip] = useState<Tip>(initialTip);
   const [key, setKey] = useState(0); // For animation trigger
   const [mounted, setMounted] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // 手動更新関数
+  const handleRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    // 現在のTipと違うTipを取得
+    let newTip = getRandomTip();
+    let attempts = 0;
+    while (newTip.action === tip.action && attempts < 5) {
+      newTip = getRandomTip();
+      attempts++;
+    }
+    setTip(newTip);
+    setKey((prev) => prev + 1);
+    // アニメーション後にリセット
+    setTimeout(() => setIsRefreshing(false), 500);
+  }, [tip.action]);
 
   useEffect(() => {
     // クライアントサイドでマウント後にランダムなTipを設定
@@ -68,17 +85,41 @@ function RandomTipComponent() {
           key={key}
           className="animate-in fade-in duration-500"
         >
-          {/* カテゴリーバッジ */}
-          <div className="flex items-center gap-2 mb-2">
-            <span
-              className="text-lg flex-shrink-0 transition-transform duration-300 hover:scale-110"
-              aria-hidden="true"
+          {/* ヘッダー: カテゴリーバッジ + 更新ボタン */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span
+                className="text-lg flex-shrink-0 transition-transform duration-300 hover:scale-110"
+                aria-hidden="true"
+              >
+                {categoryEmoji}
+              </span>
+              <span className="text-xs font-medium text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-2 py-0.5 rounded-full">
+                {tip.category}
+              </span>
+            </div>
+            {/* 更新ボタン */}
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center justify-center w-8 h-8 rounded-full text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors disabled:opacity-50"
+              aria-label="別のTipsを表示"
+              title="別のTipsを表示"
             >
-              {categoryEmoji}
-            </span>
-            <span className="text-xs font-medium text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-2 py-0.5 rounded-full">
-              {tip.category}
-            </span>
+              <svg
+                className={`w-5 h-5 transition-transform duration-500 ${isRefreshing ? 'animate-spin' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
           </div>
 
           {/* アクション（メイン） */}

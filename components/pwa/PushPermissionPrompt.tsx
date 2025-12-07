@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePushPermission, getPermissionStateMessage } from '@/hooks/usePushPermission';
+import { useSettingsStore } from '@/store/settingsStore';
 import Button from '@/components/ui/Button';
 
 const DISMISSED_KEY = 'swan-push-prompt-dismissed';
@@ -32,9 +33,12 @@ export function PushPermissionPrompt({
     isSupported,
     needsIOSInstallation,
     isLoading,
+    isSubscribed,
     subscribe,
     error,
   } = usePushPermission();
+
+  const { updateNotifications } = useSettingsStore();
 
   const [isVisible, setIsVisible] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
@@ -45,13 +49,14 @@ export function PushPermissionPrompt({
 
     // Don't show if:
     // - Not supported
-    // - Already subscribed
+    // - Already subscribed (via permissionState or isSubscribed flag)
     // - Permission denied (can't request again)
     // - iOS needs installation (show install guide instead)
     // - Still loading
     if (
       !isSupported ||
       permissionState === 'subscribed' ||
+      isSubscribed ||
       permissionState === 'denied' ||
       permissionState === 'unsupported' ||
       needsIOSInstallation ||
@@ -73,7 +78,7 @@ export function PushPermissionPrompt({
 
     // Show prompt for 'prompt' or 'granted' (not yet subscribed) states
     setIsVisible(permissionState === 'prompt' || permissionState === 'granted');
-  }, [permissionState, isSupported, needsIOSInstallation, isLoading]);
+  }, [permissionState, isSupported, needsIOSInstallation, isLoading, isSubscribed]);
 
   const handleSubscribe = async () => {
     setIsSubscribing(true);
@@ -82,6 +87,8 @@ export function PushPermissionPrompt({
       const result = await subscribe();
 
       if (result.success) {
+        // 設定ストアも同期して更新
+        updateNotifications({ enabled: true });
         setIsVisible(false);
         onSubscribed?.();
       }

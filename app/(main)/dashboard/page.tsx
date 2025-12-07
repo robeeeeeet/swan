@@ -42,6 +42,10 @@ export default function DashboardPage() {
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 後から記録用の状態
+  const [isBackdatedRecord, setIsBackdatedRecord] = useState(false);
+  const [customDateTime, setCustomDateTime] = useState<string>('');
+
   // Get counts
   const smokedCount = getTodayCount('smoked');
   const cravedCount = getTodayCount('craved');
@@ -93,8 +97,14 @@ export default function DashboardPage() {
     setIsSubmitting(true);
 
     try {
+      // カスタムタイムスタンプの計算（後から記録の場合）
+      let customTimestamp: number | undefined;
+      if (isBackdatedRecord && customDateTime) {
+        customTimestamp = new Date(customDateTime).getTime();
+      }
+
       // Create record (saves to IndexedDB and syncs to Firestore)
-      await createRecord(pendingRecordType, selectedTags);
+      await createRecord(pendingRecordType, selectedTags, customTimestamp);
 
       // Show feedback message
       if (pendingRecordType === 'resisted') {
@@ -108,10 +118,12 @@ export default function DashboardPage() {
       // Refresh achievements panel to show updated stats
       refreshAchievements();
 
-      // Close modal
+      // Close modal and reset states
       setShowTagModal(false);
       setPendingRecordType(null);
       setSelectedTags([]);
+      setIsBackdatedRecord(false);
+      setCustomDateTime('');
     } catch (error) {
       console.error('Failed to create record:', error);
       setFeedbackMessage('記録の保存に失敗しました');
@@ -129,6 +141,17 @@ export default function DashboardPage() {
             ダッシュボード
           </h1>
           <div className="flex items-center gap-2">
+            <a
+              href="https://forms.gle/xZAiA2jSB5mfUmkL7"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center min-h-[44px] min-w-[44px] text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors"
+              aria-label="フィードバック"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </a>
             <Link
               href="/history"
               className="flex items-center justify-center min-h-[44px] min-w-[44px] text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors"
@@ -259,6 +282,8 @@ export default function DashboardPage() {
           setShowTagModal(false);
           setPendingRecordType(null);
           setSelectedTags([]);
+          setIsBackdatedRecord(false);
+          setCustomDateTime('');
         }}
         title="状況を選択（任意）"
         size="md"
@@ -295,6 +320,57 @@ export default function DashboardPage() {
             })}
           </div>
 
+          {/* 後から記録セクション */}
+          <div className="pt-4 border-t border-neutral-200 dark:border-neutral-700">
+            <button
+              type="button"
+              onClick={() => setIsBackdatedRecord(!isBackdatedRecord)}
+              className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
+            >
+              <svg
+                className={`w-5 h-5 transition-transform duration-200 ${isBackdatedRecord ? 'rotate-90' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              <span className="flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                後から記録
+              </span>
+            </button>
+
+            {/* 日時入力フィールド（展開時） */}
+            {isBackdatedRecord && (
+              <div className="mt-3 p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg animate-in fade-in duration-200">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  記録する日時
+                </label>
+                <input
+                  type="datetime-local"
+                  value={customDateTime}
+                  onChange={(e) => setCustomDateTime(e.target.value)}
+                  max={new Date().toISOString().slice(0, 16)}
+                  className="
+                    w-full px-3 py-2
+                    bg-white dark:bg-neutral-700
+                    border-2 border-neutral-300 dark:border-neutral-600
+                    rounded-lg
+                    text-neutral-900 dark:text-white
+                    focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+                    min-h-[44px]
+                  "
+                />
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                  過去の日時を選択して記録できます
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Action buttons */}
           <div className="flex gap-3 mt-6">
             <Button
@@ -304,6 +380,8 @@ export default function DashboardPage() {
                 setShowTagModal(false);
                 setPendingRecordType(null);
                 setSelectedTags([]);
+                setIsBackdatedRecord(false);
+                setCustomDateTime('');
               }}
               disabled={isSubmitting}
             >
@@ -313,7 +391,7 @@ export default function DashboardPage() {
               variant="primary"
               fullWidth
               onClick={submitRecord}
-              disabled={isSubmitting}
+              disabled={isSubmitting || (isBackdatedRecord && !customDateTime)}
               loading={isSubmitting}
             >
               記録する

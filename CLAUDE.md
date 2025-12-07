@@ -6,18 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Swan（スワン）**は、日本人ユーザーを対象とした禁煙・減煙支援のProgressive Web App（PWA）です。Gemini 2.0 Flash APIによるAIコーチングとWeb Push通知を活用し、日々の記録と先回りサポートを通じて段階的な禁煙を支援します。
 
-**現在のステータス**: Phase 1完了 - 基本記録機能、SOS機能、履歴ページ、設定ページ、オフラインファースト実装完了（2025-11-30）
+**現在のステータス**: Phase 3完了 - Web Push通知、Gemini AIコーチング、Cron Jobs実装完了（2025-12-06）
 
 ## 技術スタック
 
-- **フロントエンド**: Next.js 16.0.5 (App Router), TypeScript 5.x, Tailwind CSS 4.x
+- **フロントエンド**: Next.js 16.0.7 (App Router), TypeScript 5.x, Tailwind CSS 4.x
 - **状態管理**: Zustand 5.0.8
 - **データベース**: Firebase Firestore 12.6.0
 - **オフラインストレージ**: IndexedDB（カスタム実装）
 - **認証**: Firebase Auth 12.6.0（匿名認証＋ソーシャルログイン）
 - **Push通知**: Firebase Cloud Messaging (FCM) 12.6.0 - iOS Safari 16.4+対応
-- **AI/LLM**: Gemini 2.0 Flash API（Phase 3で統合予定）
-- **ホスティング**: Vercel（Cron Jobs活用予定）
+- **AI/LLM**: Gemini 2.0 Flash API（✅ 統合済み）
+- **ホスティング**: Vercel（Cron Jobs ✅ 設定済み）
 - **PWA**: @ducanh2912/next-pwa 10.2.9 (Workbox)
 
 ## プロジェクト構造
@@ -39,7 +39,9 @@ swan/
 │   ├── sos/                  # SOSフロー（✅ 実装済み）
 │   │   ├── timer/            # 3分タイマー
 │   │   └── breathing/        # 深呼吸モード
-│   ├── api/                  # APIルート（ディレクトリのみ）
+│   ├── api/                  # APIルート（✅ 実装済み）
+│   │   ├── coaching/         # AIコーチングAPI
+│   │   └── cron/             # Cron Jobs（C-01〜C-04）
 │   ├── layout.tsx            # ルートレイアウト（✅ 実装済み）
 │   ├── globals.css           # グローバルCSS + Swanデザインシステム（✅ 実装済み）
 │   └── page.tsx              # ルートページ（✅ 実装済み）
@@ -48,11 +50,18 @@ swan/
 │   ├── dashboard/            # ダッシュボード専用（✅ 実装済み）
 │   ├── sos/                  # SOS専用（✅ 実装済み）
 │   ├── history/              # 履歴ページ専用（✅ 実装済み）
-│   └── settings/             # 設定ページ専用（✅ 実装済み）
+│   ├── settings/             # 設定ページ専用（✅ 実装済み）
+│   ├── pwa/                  # PWA関連（✅ 実装済み - Push通知許可UI）
+│   └── install/              # インストールガイド（✅ 実装済み）
 ├── hooks/                    # カスタムフック（✅ 実装済み）
+│   ├── useCoaching.ts        # AIコーチング
+│   └── usePushPermission.ts  # Push通知許可
 ├── lib/                      # サービス層
-│   ├── firebase/             # Firebase統合（✅ 実装済み）
+│   ├── firebase/             # Firebase統合（✅ 実装済み - Admin SDK含む）
 │   ├── indexeddb/            # IndexedDB統合（✅ 実装済み）
+│   ├── ai/                   # Gemini AI連携（✅ 実装済み）
+│   ├── push/                 # Push通知（✅ 実装済み）
+│   ├── cron/                 # Cronユーティリティ（✅ 実装済み）
 │   └── utils/                # ユーティリティ（✅ 実装済み）
 ├── store/                    # Zustandストア（✅ 実装済み）
 ├── types/                    # TypeScript型定義（✅ 実装済み）
@@ -72,8 +81,8 @@ swan/
 ## 開発フェーズ
 
 **Phase 1（Week 1-2）**: ✅ 完了（2025-11-30） - MVP基盤、基本記録機能、SOS機能、履歴ページ、設定ページ、オフラインファースト実装
-**Phase 2（Week 3-4）**: PWA設定、成果可視化パネル（B-03）、iOSインストールガイド
-**Phase 3（Week 4-6）**: Web Push通知とAIコーチング機能
+**Phase 2（Week 3-4）**: ✅ 完了（2025-12-03） - PWA設定、成果可視化パネル（B-03）、iOSインストールガイド
+**Phase 3（Week 4-6）**: ✅ 完了（2025-12-06） - Web Push通知とAIコーチング機能
 **Phase 4（Week 7-8）**: テスト、パフォーマンス最適化、アクセシビリティ
 
 ## 主要機能
@@ -90,15 +99,17 @@ swan/
 - **B-03**: ✅ 成果可視化パネル - 節約金額、取り戻した寿命、我慢成功回数、記録継続日数（実装済み - 2025-11-30）
 
 ### C群：AIコーチング機能（Web Push活用）
-- **C-01**: モーニング・ブリーフィング - 毎朝の通知（Phase 3実装予定）
-- **C-02**: 魔の時間帯アラート - 予測的な先回り通知（Phase 3実装予定）
-- **C-03**: ステップダウン提案 - 目標本数の自動調整（Phase 3実装予定）
-- **C-04**: 生存確認 - 入力忘れ防止の優しいリマインド（Phase 3実装予定）
+- **C-01**: ✅ モーニング・ブリーフィング - 毎朝の通知（Cron自動実行）
+- **C-02**: ✅ 魔の時間帯アラート - 予測的な先回り通知（API実装済み・Hobbyプラン制限で手動のみ）
+- **C-03**: ✅ ステップダウン提案 - 目標本数の自動調整（API実装済み・Hobbyプラン制限で手動のみ）
+- **C-04**: ✅ 生存確認 - 入力忘れ防止のリマインド（API実装済み・Hobbyプラン制限で手動のみ）
+
+> ⚠️ **注意**: Vercel Hobbyプランでは Cron が1日1回のみ。C-01のみ自動実行、他はProプランで有効化可能。
 
 ### D群：衝動対策・SOS機能
 - **D-01**: ✅ 3分間タイマー - 「まずは3分だけ」（実装済み）
 - **D-02**: ✅ 深呼吸モード - アニメーションガイド（実装済み）
-- **D-03**: AI激励メッセージ - 状況に応じた励まし（Phase 3実装予定）
+- **D-03**: ✅ AI激励メッセージ - 状況に応じた励まし（実装済み - 2025-12-06）
 
 ### E群：履歴・統計機能
 - **E-01**: ✅ 履歴ページ - 期間フィルター、週間統計、本数推移チャート、日別カード一覧、日別詳細モーダル（実装済み - 2025-11-30）

@@ -14,7 +14,7 @@
 
 | カテゴリ | 技術 | バージョン |
 |---------|------|-----------|
-| フロントエンド | Next.js (App Router) | 16.0.5 |
+| フロントエンド | Next.js (App Router) | 16.0.7 |
 | UI Framework | React | 19.2.0 |
 | 言語 | TypeScript | 5.x |
 | スタイリング | Tailwind CSS | 4.x |
@@ -534,18 +534,22 @@ interface SyncQueueItem {
 - **app/api/coaching/route.ts** - コーチングAPI
 - **hooks/useCoaching.ts** - コーチングフック
 
-##### Cron Jobs
-- **vercel.json** - 4つのスケジュール設定
+##### Cron Jobs（⚠️ Hobbyプラン制限対応）
+- **vercel.json** - 1つのスケジュール設定（Hobbyプラン制限：1日1回のみ）
+  - morning-briefing のみ自動実行
+  - 他3つ（craving-alert, step-down, survival-check）はAPI実装済み・手動トリガー可能
 - **lib/cron/utils.ts** - Cronユーティリティ
 
 **Phase 3 完了時の機能:**
 - ✅ Phase 2 の全機能
 - ✅ Web Push通知（iOS Safari含む）
-- ✅ モーニング・ブリーフィング（C-01）
-- ✅ 魔の時間帯アラート（C-02）
+- ✅ モーニング・ブリーフィング（C-01）- Cron自動実行
+- ✅ 魔の時間帯アラート（C-02）- API実装済み（Hobbyプラン制限で手動のみ）
 - ✅ AI励ましメッセージ（D-03）
-- ✅ 入力忘れリマインド（C-04）
-- ✅ 目標自動調整提案（C-03）
+- ✅ 入力忘れリマインド（C-04）- API実装済み（Hobbyプラン制限で手動のみ）
+- ✅ 目標自動調整提案（C-03）- API実装済み（Hobbyプラン制限で手動のみ）
+
+**注**: Vercel Hobbyプランでは Cron が1日1回のみのため、C-01のみ自動実行。Proプランで全機能有効化可能。
 
 ---
 

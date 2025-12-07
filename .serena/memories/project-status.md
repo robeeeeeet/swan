@@ -621,7 +621,10 @@ Phase 1のすべての機能が実装完了しました：
   - `getUserDailyStats()` - 日次統計取得
   - `sendNotificationToUser()` - 通知送信
 - [x] **vercel.json** - Cron Job設定
-  - 4つのスケジュール設定
+  - **Hobbyプラン制限**: 1日1回のみ実行可能
+  - 現在は morning-briefing のみ設定（毎朝7時JST）
+  - 他のCron APIルート（craving-alert, step-down, survival-check）は実装済みだが自動実行なし
+  - Proプランにアップグレードすれば全4つのCron有効化可能
 
 ##### 必要な環境変数（Phase 3追加分）
 ```.env

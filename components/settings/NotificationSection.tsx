@@ -1,8 +1,9 @@
 'use client';
 
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Switch } from '@/components/ui/Switch';
+import { usePushPermission, getPermissionStateMessage } from '@/hooks/usePushPermission';
 import { NotificationSettings } from '@/types';
 
 interface NotificationSectionProps {
@@ -22,32 +23,56 @@ export const NotificationSection: FC<NotificationSectionProps> = ({
   notifications,
   onUpdate,
 }) => {
+  const {
+    permissionState,
+    isSubscribed,
+    isLoading,
+    subscribe,
+    unsubscribe,
+  } = usePushPermission();
+
+  // 実際のPush通知購読状態とsettingsを同期
+  useEffect(() => {
+    // 購読済みだがsettingsでは無効になっている場合、settingsを更新
+    if (isSubscribed && !notifications.enabled) {
+      onUpdate({ enabled: true });
+    }
+    // 購読していないがsettingsでは有効になっている場合、settingsを更新
+    // ただし、ローディング中は更新しない
+    if (!isLoading && !isSubscribed && notifications.enabled && permissionState !== 'subscribed') {
+      onUpdate({ enabled: false });
+    }
+  }, [isSubscribed, notifications.enabled, isLoading, permissionState, onUpdate]);
+
+  // 通知有効化スイッチの変更ハンドラー
+  const handleNotificationToggle = async (checked: boolean) => {
+    if (checked) {
+      // 通知を有効にする場合はPush通知を購読
+      const result = await subscribe();
+      if (result.success) {
+        onUpdate({ enabled: true });
+      }
+    } else {
+      // 通知を無効にする場合はPush通知を解除
+      const success = await unsubscribe();
+      if (success) {
+        onUpdate({ enabled: false });
+      }
+    }
+  };
+
+  // 現在有効な通知タイプのみ表示（朝の通知のみ稼働中）
   const notificationTypes = [
     {
       id: 'morningBriefing',
       label: 'モーニング・ブリーフィング',
-      description: '毎朝の励ましメッセージ',
+      description: '毎朝7時に励ましメッセージをお届け',
       emoji: '🌅',
     },
-    {
-      id: 'dangerousTimeAlerts',
-      label: '魔の時間帯アラート',
-      description: '吸いたくなる時間帯に先回り通知',
-      emoji: '⏰',
-    },
-    {
-      id: 'stepDownSuggestions',
-      label: 'ステップダウン提案',
-      description: '目標調整の提案',
-      emoji: '📉',
-    },
-    {
-      id: 'survivalCheck',
-      label: '生存確認',
-      description: '入力忘れ防止リマインド',
-      emoji: '💌',
-    },
   ];
+
+  // 実際の通知状態（Push通知の購読状態を優先）
+  const isNotificationEnabled = isSubscribed || notifications.enabled;
 
   return (
     <Card>
@@ -69,19 +94,25 @@ export const NotificationSection: FC<NotificationSectionProps> = ({
                 通知を有効にする
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                すべての通知のマスタースイッチ
+                {isLoading ? '確認中...' : getPermissionStateMessage(permissionState)}
               </p>
             </div>
             <Switch
-              checked={notifications.enabled}
-              onChange={(checked) => onUpdate({ enabled: checked })}
+              checked={isNotificationEnabled}
+              onChange={handleNotificationToggle}
               aria-label="通知を有効にする"
+              disabled={isLoading || permissionState === 'denied' || permissionState === 'unsupported'}
             />
           </label>
+          {permissionState === 'denied' && (
+            <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
+              ブラウザの設定から通知を許可してください
+            </p>
+          )}
         </div>
 
         {/* 各種通知タイプ（無効時はグレーアウト表示） */}
-        <div className={`space-y-3 ${!notifications.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`space-y-3 ${!isNotificationEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
           {notificationTypes.map((type) => (
             <label
               key={type.id}
@@ -102,14 +133,14 @@ export const NotificationSection: FC<NotificationSectionProps> = ({
                 checked={notifications[type.id as keyof NotificationSettings] as boolean}
                 onChange={(checked) => onUpdate({ [type.id]: checked })}
                 aria-label={type.label}
-                disabled={!notifications.enabled}
+                disabled={!isNotificationEnabled}
               />
             </label>
           ))}
         </div>
 
         {/* プライバシーモード（無効時はグレーアウト表示） */}
-        <div className={`pt-4 border-t border-gray-100 dark:border-slate-700 ${!notifications.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`pt-4 border-t border-gray-100 dark:border-slate-700 ${!isNotificationEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
           <label className="flex items-center justify-between min-h-[44px] cursor-pointer">
             <div className="flex-1">
               <p className="font-medium text-gray-900 dark:text-white">
@@ -123,13 +154,13 @@ export const NotificationSection: FC<NotificationSectionProps> = ({
               checked={notifications.privacyMode}
               onChange={(checked) => onUpdate({ privacyMode: checked })}
               aria-label="プライバシーモード"
-              disabled={!notifications.enabled}
+              disabled={!isNotificationEnabled}
             />
           </label>
         </div>
 
         {/* サイレント時間帯（無効時はグレーアウト表示） */}
-        <div className={`pt-4 border-t border-gray-100 dark:border-slate-700 space-y-3 ${!notifications.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`pt-4 border-t border-gray-100 dark:border-slate-700 space-y-3 ${!isNotificationEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
             サイレント時間帯
           </p>
@@ -146,7 +177,7 @@ export const NotificationSection: FC<NotificationSectionProps> = ({
                 type="time"
                 value={notifications.quietHoursStart}
                 onChange={(e) => onUpdate({ quietHoursStart: e.target.value })}
-                disabled={!notifications.enabled}
+                disabled={!isNotificationEnabled}
                 className="
                   w-full px-3 py-2
                   bg-white dark:bg-slate-700
@@ -170,7 +201,7 @@ export const NotificationSection: FC<NotificationSectionProps> = ({
                 type="time"
                 value={notifications.quietHoursEnd}
                 onChange={(e) => onUpdate({ quietHoursEnd: e.target.value })}
-                disabled={!notifications.enabled}
+                disabled={!isNotificationEnabled}
                 className="
                   w-full px-3 py-2
                   bg-white dark:bg-slate-700
