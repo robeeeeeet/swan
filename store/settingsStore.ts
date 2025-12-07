@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { UserSettings, NotificationSettings, GoalSettings, AppSettings } from '@/types';
-import { Timestamp } from 'firebase/firestore';
 
 interface SettingsState {
   settings: UserSettings | null;
@@ -41,7 +40,6 @@ export const useSettingsStore = create<SettingsState>()(
                   ...state.settings.notifications,
                   ...notifications,
                 },
-                updatedAt: Timestamp.now(),
               }
             : null,
         })),
@@ -55,7 +53,6 @@ export const useSettingsStore = create<SettingsState>()(
                   ...state.settings.goals,
                   ...goals,
                 },
-                updatedAt: Timestamp.now(),
               }
             : null,
         })),
@@ -69,7 +66,6 @@ export const useSettingsStore = create<SettingsState>()(
                   ...state.settings.app,
                   ...app,
                 },
-                updatedAt: Timestamp.now(),
               }
             : null,
         })),
