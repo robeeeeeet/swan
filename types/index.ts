@@ -191,6 +191,47 @@ export interface PushSubscription {
 }
 
 // ============================================================================
+// Tips Rating Types
+// ============================================================================
+
+/**
+ * User rating for a tip
+ */
+export type TipRatingType = 'good' | 'bad';
+
+/**
+ * Aggregated tip rating data
+ */
+export interface TipRating {
+  tipId: number;
+  goodCount: number;
+  badCount: number;
+  lastRatedAt: number; // Unix timestamp
+}
+
+/**
+ * Individual rating record (for history tracking)
+ */
+export interface TipRatingRecord {
+  id: string; // tipId_timestamp
+  tipId: number;
+  rating: TipRatingType;
+  timestamp: number;
+}
+
+/**
+ * Tip with calculated score for weighted selection
+ */
+export interface TipWithScore {
+  tipId: number;
+  wilsonScore: number; // 0-1
+  weight: number; // 0.1-1.0 (minimum 0.1 to prevent exclusion)
+  goodCount: number;
+  badCount: number;
+  totalRatings: number;
+}
+
+// ============================================================================
 // SOS Feature Types
 // ============================================================================
 

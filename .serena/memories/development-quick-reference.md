@@ -513,7 +513,7 @@ const startTimestamp = getTime(startDate);
 format(new Date(), 'M月d日(E)', { locale: ja }); // "12月1日(日)"
 ```
 
-## Tipsシステム（NEW! 2025-12-01）
+## Tipsシステム（更新: 2025-12-07）
 
 ### 30種類のカテゴリー別Tips
 禁煙対策Tipsは `constants/tips.ts` に定義されています。
@@ -555,11 +555,71 @@ import RandomTip from '@/components/dashboard/RandomTip';
 function Dashboard() {
   return (
     <div>
-      {/* 5分ごとに自動更新、カテゴリーバッジ付き表示 */}
+      {/* 時間帯・重み付け選択、Good/Bad評価ボタン付き */}
       <RandomTip />
     </div>
   );
 }
+```
+
+### Tips評価システム（NEW! 2025-12-07）
+
+#### Good/Bad評価の使い方
+```typescript
+import { addTipRating, getTipRating, getAllTipRatings } from '@/lib/indexeddb';
+
+// 評価を追加
+await addTipRating(tipId, 'good'); // または 'bad'
+
+// 特定Tipの評価を取得
+const rating = await getTipRating(tipId);
+console.log(rating); // { tipId, goodCount, badCount, lastRatedAt }
+
+// 全Tipsの評価を取得
+const allRatings = await getAllTipRatings();
+```
+
+#### 重み付けランダム選択
+```typescript
+import { getWeightedRandomTip, getCurrentTimeSlot, getCurrentDayType } from '@/lib/tips';
+
+// 現在の時間帯・曜日に適したTipsを重み付けで取得
+const tip = await getWeightedRandomTip(
+  getCurrentTimeSlot(), // 'morning' | 'daytime' | 'evening' | 'night'
+  getCurrentDayType(),  // 'weekday' | 'weekend'
+  excludeTipId          // 現在表示中のTipを除外（オプション）
+);
+```
+
+#### Wilson Score アルゴリズム
+```typescript
+import { calculateWilsonScore, calculateWeight } from '@/lib/tips/scoring';
+
+// Wilson Score Lower Bound（0〜1）
+const score = calculateWilsonScore(goodCount, badCount);
+
+// 選択重み（0.1〜1.0）- 最低10%の表示確率を保証
+const weight = calculateWeight(score);
+```
+
+#### Tips人気ランキングページ
+- URL: `/tips-ranking`
+- 機能:
+  - 統計サマリー（総評価数、Good数、評価済みTips数）
+  - ソートオプション（人気順・評価順・話題順）
+  - カテゴリーフィルター（9カテゴリー）
+  - ランキング表示（🥇🥈🥉 + 評価バー）
+
+#### 時間帯フィルタリング
+| 時間帯 | 時刻範囲 |
+|--------|---------|
+| morning | 5:00 - 8:59 |
+| daytime | 9:00 - 16:59 |
+| evening | 17:00 - 20:59 |
+| night | 21:00 - 4:59 |
+
+- 休日（土・日）は時間帯制限を緩和
+- `timeSlots: []` のTipsは全時間帯で表示
 ```
 
 #### 将来の拡張: 状況に応じたTips提案

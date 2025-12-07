@@ -9,7 +9,7 @@ import { SmokingRecord, DailySummary, UserSettings } from '@/types';
 
 // Database configuration
 export const DB_NAME = 'SwanDB';
-export const DB_VERSION = 1;
+export const DB_VERSION = 2; // Updated for tip ratings
 
 // Object store names
 export const STORES = {
@@ -17,6 +17,8 @@ export const STORES = {
   SUMMARIES: 'summaries',
   SETTINGS: 'settings',
   SYNC_QUEUE: 'syncQueue',
+  TIP_RATINGS: 'tipRatings', // New: Aggregated tip ratings
+  TIP_RATING_HISTORY: 'tipRatingHistory', // New: Individual rating records
 } as const;
 
 // Sync operation types
@@ -80,6 +82,18 @@ export function openDB(): Promise<IDBDatabase> {
         const syncQueueStore = db.createObjectStore(STORES.SYNC_QUEUE, { keyPath: 'id' });
         syncQueueStore.createIndex('timestamp', 'timestamp', { unique: false });
         syncQueueStore.createIndex('storeName', 'storeName', { unique: false });
+      }
+
+      // Create tip ratings store (aggregated per-tip)
+      if (!db.objectStoreNames.contains(STORES.TIP_RATINGS)) {
+        db.createObjectStore(STORES.TIP_RATINGS, { keyPath: 'tipId' });
+      }
+
+      // Create tip rating history store (individual ratings)
+      if (!db.objectStoreNames.contains(STORES.TIP_RATING_HISTORY)) {
+        const historyStore = db.createObjectStore(STORES.TIP_RATING_HISTORY, { keyPath: 'id' });
+        historyStore.createIndex('tipId', 'tipId', { unique: false });
+        historyStore.createIndex('timestamp', 'timestamp', { unique: false });
       }
     };
   });

@@ -374,6 +374,72 @@ export default function SOSLayout({ children }) {
 2. **コード重複許容**: (main)とsosで同じ認証ロジックを持つが、将来的に異なる要件が出る可能性を考慮
 3. **ローディングUI**: 一貫したローディング体験を提供
 
+## Tips評価システム設計（2025-12-07 NEW!）
+
+### Wilson Score Lower Bound採用理由
+
+#### 選択肢の検討
+| アルゴリズム | メリット | デメリット |
+|-------------|---------|-----------|
+| **Wilson Score** ✅採用 | 少ないサンプルでも公平、Redditで実績 | 計算がやや複雑 |
+| 単純平均 | 理解しやすい | サンプル1で100%になる問題 |
+| ベイズ推定 | 理論的に正確 | 事前分布の選定が難しい |
+| Laplace smoothing | シンプル | 評価数が増えると影響が薄まる |
+
+#### Wilson Score の特徴
+1. **保守的な評価**: 下限値を使うため、少ない評価で過大評価されにくい
+2. **Redditの実績**: 大規模ランキングシステムで採用実績あり
+3. **探索と活用のバランス**: 未評価Tipsに50%の初期スコアを与え、試行機会を確保
+
+#### 重み計算式
+```typescript
+// Wilson Score: 0〜1
+const wilsonScore = calculateWilsonScore(goodCount, badCount);
+
+// 選択重み: 0.1〜1.0
+const weight = Math.max(0.1, 0.3 + wilsonScore * 0.7);
+```
+
+**設計判断**:
+- **最低10%保証**: Bad評価のTipsも再評価のチャンスがある
+- **未評価は50%**: 新しいTipsは中程度の確率で表示される
+- **Good 100%で最大1.0**: 高評価Tipsは確実に表示される
+
+### 時間帯フィルタリング設計
+
+#### 要件
+- 「シャワーを浴びる」は仕事中に表示したくない
+- 「パワーナップ」は朝に表示しても意味がない
+- 休日はゆったり過ごせるので制限を緩和したい
+
+#### 解決策
+```typescript
+interface Tip {
+  timeSlots: TimeSlot[];  // 空配列 = 全時間帯OK
+  dayTypes: DayType[];    // 空配列 = 全曜日OK
+}
+```
+
+- 休日（土日）は時間帯制限を無視して全Tips表示
+- 平日は `timeSlots` でフィルタリング
+- `timeSlots: []` の場合は常に表示対象
+
+### IndexedDBスキーマ拡張
+
+#### DB Version 1 → 2
+```typescript
+// 新規オブジェクトストア
+TIP_RATINGS: 'tipRatings'       // 評価データ
+TIP_RATING_HISTORY: 'tipRatingHistory' // 評価履歴（分析用）
+```
+
+#### 設計判断
+1. **ローカルオンリー**: 評価データはFirestoreに同期しない
+   - 理由: プライバシー（どのTipsを評価したかは個人情報）
+   - 理由: シンプルさ（同期ロジック不要）
+2. **履歴保持**: 全評価履歴を保持（将来のパターン分析用）
+3. **キー設計**: `tipId` をキーにして高速アクセス
+
 ## Tipsシステム設計（2025-12-01 NEW!）
 
 ### CSV → TypeScript変換の決定

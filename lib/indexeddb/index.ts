@@ -432,3 +432,14 @@ export { getRecordsByUser, getRecordsByDate } from './records';
 export { getSummaryByDate } from './summaries';
 export { getSettings, initializeSettings } from './settings';
 export { hasPendingSync } from './sync';
+
+// Tip ratings operations (local-only, no Firestore sync)
+export {
+  getAllTipRatings,
+  getTipRating,
+  addTipRating,
+  getTipRatingHistory,
+  getAllRatingHistory,
+  clearAllTipRatings,
+  importTipRatings,
+} from './tipRatings';
