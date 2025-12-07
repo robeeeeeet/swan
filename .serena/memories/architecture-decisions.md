@@ -458,7 +458,7 @@ async function getAISuggestedTip(context: UserContext): Promise<Tip> {
 - 表示後に「我慢できた」が押された率
 - カテゴリー別の抵抗成功率
 
-## Phase 3 アーキテクチャ決定（2025-12-06 NEW!）
+## Phase 3 アーキテクチャ決定（2025-12-06、2025-12-07バグ修正完了）
 
 ### Gemini AI 統合設計
 
@@ -525,7 +525,7 @@ Cron Jobsがトークンを使って通知送信
 - `isIOSRequiringInstallation()` で検出
 - インストールガイドへの誘導
 
-### Cron Jobs設計（vercel.json）- 2025-12-07更新
+### Cron Jobs設計（vercel.json）- 最終更新: 2025-12-07
 
 #### ⚠️ Vercel Hobbyプラン制限
 **重要**: Vercel Hobbyプランでは Cron Jobs が**1日1回のみ**実行可能。

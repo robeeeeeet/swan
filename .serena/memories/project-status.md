@@ -2,8 +2,9 @@
 
 ## プロジェクト概要
 - **プロジェクト名**: Swan（スワン）- 禁煙・減煙支援PWA
-- **現在のステータス**: Phase 3 完了 ✅
+- **現在のステータス**: Phase 3 完了 ✅（2025-12-07）
 - **開発フェーズ**: Phase 4（テスト・最適化準備中）
+- **最新コミット**: f4dc090 - Firestore設定保存・Push通知許可の根本修正
 
 ## 最新の実装状況
 
@@ -652,14 +653,16 @@ CRON_SECRET=your_random_secret_string
 
 ## ビルド状況
 
-### 最新ビルド: 2025-11-30
+### 最新ビルド: 2025-12-07
 ```
 ✓ Compiled successfully
 ✓ TypeScript checks passed
-✓ Static pages generated: /, /dashboard, /signin
+✓ Static pages generated
+✓ PWA Service Worker generated (sw.js)
+✓ All API routes functional
 ```
 
-**警告**: baseline-browser-mapping が古い（機能に影響なし）
+**Phase 3 完了**: Web Push通知、Gemini AIコーチング、Cron Jobs実装完了
 
 ## 次のステップ
 
@@ -697,12 +700,12 @@ npm run start        # 本番サーバー
 
 ## 技術スタック（確定）
 
-- **フロントエンド**: Next.js 16.0.5 (App Router), React 19.2.0, TypeScript 5.x
+- **フロントエンド**: Next.js 16.0.7 (App Router), React 19.2.0, TypeScript 5.x
 - **スタイリング**: Tailwind CSS 4.x
 - **状態管理**: Zustand 5.0.8
 - **バックエンド**: Firebase 12.6.0 (Auth, Firestore, FCM)
 - **PWA**: @ducanh2912/next-pwa 10.2.9
-- **AI**: Gemini 2.0 Flash API（未統合）
+- **AI**: Gemini 2.0 Flash API（✅ 統合完了 - 2025-12-06）
 
 ## ドキュメント
 

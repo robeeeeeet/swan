@@ -53,6 +53,32 @@ Web Push通知に必要なVAPID鍵です。
 
 ---
 
+### 🔐 Firebase Admin SDK (サーバーサイド - Push通知送信用)
+
+Push通知の送信にはFirebase Admin SDKが必要です。
+
+| 変数名 | 説明 | 取得方法 |
+|--------|------|----------|
+| `FIREBASE_ADMIN_PROJECT_ID` | プロジェクトID | サービスアカウントJSONの `project_id` |
+| `FIREBASE_ADMIN_CLIENT_EMAIL` | クライアントメール | サービスアカウントJSONの `client_email` |
+| `FIREBASE_ADMIN_PRIVATE_KEY` | 秘密鍵 | サービスアカウントJSONの `private_key`（**改行含む**） |
+
+**取得手順**:
+1. Firebase Console > Project Settings > **Service Accounts** タブ
+2. **Generate new private key** ボタンをクリック
+3. ダウンロードされたJSONファイルから上記の値を取得
+
+**重要**: `FIREBASE_ADMIN_PRIVATE_KEY` は改行（`\n`）が含まれているため、**ダブルクォートで囲む**必要があります。
+
+```bash
+# ✅ 正しい設定方法
+FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"
+```
+
+詳細なセットアップ手順は `docs/firebase-push-setup.md` を参照してください。
+
+---
+
 ### 🤖 Gemini API (AIコーチング機能)
 
 Google Gemini 2.0 Flash APIの認証キーです（Phase 3で使用）。
@@ -136,6 +162,9 @@ npm run test:firebase
 
 以下の変数はサーバーサイド専用です。**絶対に公開しないでください**:
 
+- `FIREBASE_ADMIN_PROJECT_ID`
+- `FIREBASE_ADMIN_CLIENT_EMAIL`
+- `FIREBASE_ADMIN_PRIVATE_KEY`
 - `GEMINI_API_KEY`
 - `CRON_SECRET`
 

@@ -454,11 +454,13 @@ function MyComponent() {
 - [x] PWA基盤設定 ✅
 - [x] iOSインストールガイド（E-02） ✅
 
-### Phase 3 完了 ✅（2025-12-06）
+### Phase 3 完了 ✅（2025-12-07）
 - [x] Push通知基盤（FCM）✅
 - [x] Gemini AI連携 ✅
 - [x] AIコーチング機能（C-01, C-02, C-03, C-04, D-03）✅
 - [x] Cron Jobs設定 ✅
+- [x] Firestore設定保存修正 ✅（2025-12-07）
+- [x] Push通知許可フロー修正 ✅（2025-12-07）
 
 **Phase 1～3 完全完了！** 🎉
 
@@ -709,10 +711,10 @@ await sendSwanNotification(token, 'morning_briefing', {
 
 | ジョブ | UTC | JST | 状態 |
 |--------|-----|-----|------|
-| morning-briefing | 22:00 | 07:00 | ✅ 自動実行 |
-| craving-alert | - | - | 📦 実装済み（手動のみ） |
-| survival-check | - | - | 📦 実装済み（手動のみ） |
-| step-down | - | - | 📦 実装済み（手動のみ） |
+| morning-briefing | 22:00 | 07:00 | ✅ 自動実行（Hobbyプランで1日1回） |
+| craving-alert | - | - | 📦 実装済み（Proプランで有効化可能） |
+| survival-check | - | - | 📦 実装済み（Proプランで有効化可能） |
+| step-down | - | - | 📦 実装済み（Proプランで有効化可能） |
 
 ### Proプランでの全Cron有効化
 Proプランにアップグレードすれば、以下の設定で全ジョブを有効化できます：
