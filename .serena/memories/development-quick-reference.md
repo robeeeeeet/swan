@@ -461,6 +461,8 @@ function MyComponent() {
 - [x] Cron Jobs設定 ✅
 - [x] Firestore設定保存修正 ✅（2025-12-07）
 - [x] Push通知許可フロー修正 ✅（2025-12-07）
+- [x] 履歴削除機能 ✅（2025-12-07）
+- [x] 更新ボタン（ヘッダー）✅（2025-12-07）
 
 **Phase 1～3 完全完了！** 🎉
 
@@ -578,6 +580,91 @@ function getSuggestedTips(situationTags: string[]) {
   );
 }
 ```
+
+## 履歴削除機能（NEW! 2025-12-07）
+
+### 使用方法
+ダッシュボードで「今日の目標」または「今日の記録」セクションをタップすると履歴モーダルが開きます。
+
+```typescript
+// useRecordsフックのdeleteRecord使用例
+import { useRecords } from '@/hooks/useRecords';
+
+function MyComponent() {
+  const { todayRecords, deleteRecord } = useRecords();
+
+  const handleDelete = async (recordId: string) => {
+    try {
+      await deleteRecord(recordId);
+      console.log('記録を削除しました');
+    } catch (error) {
+      console.error('削除に失敗しました:', error);
+    }
+  };
+
+  return (
+    <ul>
+      {todayRecords.map(record => (
+        <li key={record.id}>
+          {record.type} - {new Date(record.timestamp).toLocaleTimeString()}
+          <button onClick={() => handleDelete(record.id)}>削除</button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### 実装詳細
+- **履歴モーダル**: タップで開く（GoalHeader / Stats Preview セクション）
+- **削除確認ダイアログ**: 誤削除防止の2段階確認
+- **即時反映**: IndexedDB削除 + Zustandストア更新 + サマリー再計算
+- **オフライン対応**: オフライン時は同期キューに追加、オンライン復帰時にFirestore同期
+
+### UIフロー
+1. ダッシュボードで「今日の目標」or「今日の記録」をタップ
+2. 履歴モーダル表示（時間降順、記録タイプ色分け）
+3. 削除したい記録をタップ
+4. 削除確認ダイアログ表示（記録内容プレビュー）
+5. 「削除」ボタンで確定、「キャンセル」で戻る
+
+## 更新ボタン（NEW! 2025-12-07）
+
+### 機能概要
+ヘッダー左端に配置された更新ボタンで、Service Workerを更新してページをリロードします。
+新しいビルドをアプリ再起動なしで反映できます。
+
+### 使用方法（ダッシュボードpage.tsx内）
+```typescript
+const [isRefreshing, setIsRefreshing] = useState(false);
+
+const handleRefresh = async () => {
+  setIsRefreshing(true);
+  try {
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        // Service Worker更新チェック
+        await registration.update();
+        // 待機中のワーカーがあればスキップ
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+      }
+    }
+    window.location.reload();
+  } catch (error) {
+    console.error('Failed to refresh:', error);
+    window.location.reload();
+  }
+};
+```
+
+### UIデザイン
+- **アイコン**: 回転矢印（ArrowPathIcon）
+- **位置**: ヘッダー左端
+- **アニメーション**: 更新中はアイコンが回転（`animate-spin`）
+- **タッチターゲット**: 44x44px（アクセシビリティ準拠）
 
 ## Gemini AI連携（NEW! 2025-12-06）
 

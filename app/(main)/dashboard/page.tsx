@@ -16,7 +16,7 @@ import { PushPermissionPrompt } from '@/components/pwa/PushPermissionPrompt';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { SOSModal } from '@/components/sos/SOSModal';
-import { RecordType, SituationTag } from '@/types';
+import { RecordType, SituationTag, SmokingRecord } from '@/types';
 import { SITUATION_TAGS, getTagLabel, getTagEmoji } from '@/constants/tags';
 import { getRandomMessage, RESISTANCE_MESSAGES, NEUTRAL_MESSAGES } from '@/constants/messages';
 
@@ -27,6 +27,7 @@ export default function DashboardPage() {
     todayRecords,
     getTodayCount,
     createRecord,
+    deleteRecord,
     isLoading,
     syncPending,
     isOnline,
@@ -45,6 +46,12 @@ export default function DashboardPage() {
   // 後から記録用の状態
   const [isBackdatedRecord, setIsBackdatedRecord] = useState(false);
   const [customDateTime, setCustomDateTime] = useState<string>('');
+
+  // 履歴削除用の状態
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState<SmokingRecord | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Get counts
   const smokedCount = getTodayCount('smoked');
@@ -132,6 +139,75 @@ export default function DashboardPage() {
     }
   };
 
+  // Handle record deletion
+  const handleDeleteRecord = async () => {
+    if (!recordToDelete || isDeleting) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteRecord(recordToDelete.id);
+      setFeedbackMessage('記録を削除しました');
+      refreshAchievements();
+      setRecordToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete record:', error);
+      setFeedbackMessage('削除に失敗しました');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Handle app refresh (Service Worker update)
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      // Service Workerの更新をチェック
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) {
+          // 新しいService Workerがあれば更新
+          await registration.update();
+
+          // waiting状態のService Workerがあれば即座にアクティベート
+          if (registration.waiting) {
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+        }
+      }
+
+      // ページをリロード
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to refresh:', error);
+      // エラーが発生してもリロードは試みる
+      window.location.reload();
+    }
+  };
+
+  // Get record type label
+  const getRecordTypeLabel = (type: RecordType) => {
+    switch (type) {
+      case 'smoked': return '吸った';
+      case 'craved': return '吸いたかった';
+      case 'resisted': return '我慢できた';
+    }
+  };
+
+  // Get record type color
+  const getRecordTypeColor = (type: RecordType) => {
+    switch (type) {
+      case 'smoked': return 'text-neutral-600 dark:text-neutral-400';
+      case 'craved': return 'text-warning';
+      case 'resisted': return 'text-success';
+    }
+  };
+
+  // Format time from timestamp
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 pb-20">
       {/* Header */}
@@ -141,6 +217,22 @@ export default function DashboardPage() {
             ダッシュボード
           </h1>
           <div className="flex items-center gap-2">
+            {/* 更新ボタン */}
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center justify-center min-h-[44px] min-w-[44px] text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors disabled:opacity-50"
+              aria-label="アプリを更新"
+            >
+              <svg
+                className={`w-6 h-6 ${isRefreshing ? 'animate-spin' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
             <a
               href="https://forms.gle/xZAiA2jSB5mfUmkL7"
               target="_blank"
@@ -196,8 +288,14 @@ export default function DashboardPage() {
         {/* Push Notification Permission Prompt */}
         <PushPermissionPrompt variant="banner" />
 
-        {/* Goal Header */}
-        <GoalHeader dailyGoal={dailyGoal} smokedToday={smokedCount} />
+        {/* Goal Header - タップで履歴表示 */}
+        <button
+          onClick={() => setShowHistoryModal(true)}
+          className="w-full text-left focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-2xl"
+          aria-label="今日の履歴を表示"
+        >
+          <GoalHeader dailyGoal={dailyGoal} smokedToday={smokedCount} />
+        </button>
 
         {/* Random Tip */}
         <RandomTip />
@@ -231,11 +329,23 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Stats Preview */}
-        <div className="bg-white dark:bg-neutral-800 rounded-2xl p-6 shadow">
-          <h3 className="text-lg font-semibold mb-4 text-neutral-900 dark:text-neutral-100">
-            今日の記録
-          </h3>
+        {/* Stats Preview - タップで履歴表示 */}
+        <button
+          onClick={() => setShowHistoryModal(true)}
+          className="w-full text-left bg-white dark:bg-neutral-800 rounded-2xl p-6 shadow hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          aria-label="今日の履歴を表示"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+              今日の記録
+            </h3>
+            <span className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
+              タップで詳細
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </div>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <div className="text-3xl font-bold tabular-nums text-neutral-600 dark:text-neutral-400">
@@ -262,7 +372,7 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* SOS Modal */}
@@ -398,6 +508,123 @@ export default function DashboardPage() {
               loading={isSubmitting}
             >
               記録する
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* History Modal - 今日の履歴一覧 */}
+      <Modal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        title="今日の履歴"
+        size="md"
+      >
+        <div className="space-y-2">
+          {todayRecords.length === 0 ? (
+            <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
+              <svg className="w-12 h-12 mx-auto mb-3 text-neutral-300 dark:text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              まだ記録がありません
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+                タップして削除できます
+              </p>
+              {[...todayRecords]
+                .sort((a, b) => b.timestamp - a.timestamp)
+                .map((record) => (
+                  <button
+                    key={record.id}
+                    onClick={() => setRecordToDelete(record)}
+                    className="w-full flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-700 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-600 transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">
+                        {record.type === 'smoked' ? '🚬' : record.type === 'craved' ? '😣' : '💪'}
+                      </span>
+                      <div>
+                        <div className={`font-medium ${getRecordTypeColor(record.type)}`}>
+                          {getRecordTypeLabel(record.type)}
+                        </div>
+                        {record.tags.length > 0 && (
+                          <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                            {record.tags.map(tag => getTagLabel(tag)).join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
+                        {formatTime(record.timestamp)}
+                      </span>
+                      <svg className="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </div>
+                  </button>
+                ))}
+            </>
+          )}
+        </div>
+        <div className="mt-6">
+          <Button
+            variant="outline"
+            fullWidth
+            onClick={() => setShowHistoryModal(false)}
+          >
+            閉じる
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={recordToDelete !== null}
+        onClose={() => setRecordToDelete(null)}
+        title="記録を削除"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-neutral-600 dark:text-neutral-300">
+            この記録を削除しますか？
+          </p>
+          {recordToDelete && (
+            <div className="p-4 bg-neutral-50 dark:bg-neutral-700 rounded-xl">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">
+                  {recordToDelete.type === 'smoked' ? '🚬' : recordToDelete.type === 'craved' ? '😣' : '💪'}
+                </span>
+                <div>
+                  <div className={`font-medium ${getRecordTypeColor(recordToDelete.type)}`}>
+                    {getRecordTypeLabel(recordToDelete.type)}
+                  </div>
+                  <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                    {formatTime(recordToDelete.timestamp)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              fullWidth
+              onClick={() => setRecordToDelete(null)}
+              disabled={isDeleting}
+            >
+              キャンセル
+            </Button>
+            <Button
+              variant="error"
+              fullWidth
+              onClick={handleDeleteRecord}
+              disabled={isDeleting}
+              loading={isDeleting}
+            >
+              削除する
             </Button>
           </div>
         </div>
