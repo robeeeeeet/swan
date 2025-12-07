@@ -246,14 +246,17 @@ export async function getPendingSyncCount(): Promise<number> {
 }
 
 /**
- * Checks if there are any pending sync operations.
+ * Checks if there are any pending sync operations that can still be retried.
+ * Excludes failed items (those that exceeded max retries) from the count.
  * Useful for determining if sync is needed.
  *
  * @returns Promise resolving to true if there are pending items
  */
 export async function hasPendingSync(): Promise<boolean> {
-  const count = await getPendingSyncCount();
-  return count > 0;
+  const allItems = await getPendingSyncItems();
+  // Only count items that haven't exceeded max retries
+  const activeItems = allItems.filter((item) => item.retries < MAX_RETRIES);
+  return activeItems.length > 0;
 }
 
 /**

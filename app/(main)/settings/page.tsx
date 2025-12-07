@@ -75,13 +75,20 @@ const SettingsPage: FC = () => {
 
   // 設定を保存（IndexedDB + Firestore）
   const handleSave = async () => {
-    if (!user?.uid || !settings) return;
+    if (!user?.uid) return;
+
+    // Zustandの状態更新は非同期なので、最新の状態を取得
+    // 少し遅延を入れて確実に最新の状態を取得
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const currentSettings = useSettingsStore.getState().settings;
+
+    if (!currentSettings) return;
 
     setIsSaving(true);
     setSaveMessage(null);
 
     try {
-      await saveSettings(settings);
+      await saveSettings(currentSettings);
       setSaveMessage('保存しました ✓');
 
       // 3秒後にメッセージを消す

@@ -14,6 +14,8 @@ import {
   getCurrentUser,
   isAnonymousUser,
 } from '@/lib/firebase/auth';
+import { getSettingsFromFirestore, saveSettingsToFirestore } from '@/lib/firebase/firestore';
+import { saveSettings as saveSettingsToIDB, getSettings as getSettingsFromIDB } from '@/lib/indexeddb/settings';
 import { UserProfile } from '@/types';
 
 /**
@@ -30,7 +32,7 @@ export function useAuth() {
   // 2. Multiple components using useAuth would each trigger setLoading(true),
   //    causing a re-render loop between MainLayout and child components
   useEffect(() => {
-    const unsubscribe = onAuthChange((firebaseUser: User | null) => {
+    const unsubscribe = onAuthChange(async (firebaseUser: User | null) => {
       if (firebaseUser) {
         // Convert Firebase User to UserProfile
         const userProfile: UserProfile = {
@@ -46,12 +48,44 @@ export function useAuth() {
 
         setUser(userProfile);
 
-        // Initialize settings if not exists
-        // Note: We check settings inside the callback to avoid dependency loop
-        const currentSettings = useSettingsStore.getState().settings;
-        if (!currentSettings) {
-          const defaultSettings = getDefaultSettings(firebaseUser.uid);
-          setSettings(defaultSettings);
+        // Load settings from Firestore or initialize with defaults
+        // Priority: Firestore > IndexedDB > localStorage > Default
+        try {
+          // First try to get from Firestore (source of truth)
+          let loadedSettings = await getSettingsFromFirestore(firebaseUser.uid);
+
+          if (!loadedSettings) {
+            // Try IndexedDB next
+            const idbSettings = await getSettingsFromIDB(firebaseUser.uid);
+            loadedSettings = idbSettings ?? null;
+          }
+
+          if (loadedSettings) {
+            // Found existing settings - use them
+            setSettings(loadedSettings);
+            // Ensure they're saved to both IndexedDB and Firestore
+            await saveSettingsToIDB(loadedSettings);
+            await saveSettingsToFirestore(loadedSettings).catch(err =>
+              console.warn('[useAuth] Failed to sync settings to Firestore:', err)
+            );
+          } else {
+            // No existing settings - create defaults
+            const defaultSettings = getDefaultSettings(firebaseUser.uid);
+            setSettings(defaultSettings);
+            // Save to IndexedDB and Firestore
+            await saveSettingsToIDB(defaultSettings);
+            await saveSettingsToFirestore(defaultSettings).catch(err =>
+              console.warn('[useAuth] Failed to save default settings to Firestore:', err)
+            );
+          }
+        } catch (err) {
+          console.error('[useAuth] Error loading settings:', err);
+          // Fallback to localStorage settings or defaults
+          const currentSettings = useSettingsStore.getState().settings;
+          if (!currentSettings) {
+            const defaultSettings = getDefaultSettings(firebaseUser.uid);
+            setSettings(defaultSettings);
+          }
         }
       } else {
         clearUser();

@@ -9,6 +9,8 @@
 import { useState, useEffect } from 'react';
 import { usePushPermission, getPermissionStateMessage } from '@/hooks/usePushPermission';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useUserStore } from '@/store/userStore';
+import { updatePartialSettings } from '@/lib/indexeddb';
 import Button from '@/components/ui/Button';
 
 const DISMISSED_KEY = 'swan-push-prompt-dismissed';
@@ -38,7 +40,8 @@ export function PushPermissionPrompt({
     error,
   } = usePushPermission();
 
-  const { updateNotifications } = useSettingsStore();
+  const { updateNotifications, settings } = useSettingsStore();
+  const { user } = useUserStore();
 
   const [isVisible, setIsVisible] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
@@ -87,8 +90,23 @@ export function PushPermissionPrompt({
       const result = await subscribe();
 
       if (result.success) {
-        // 設定ストアも同期して更新
+        // 設定ストアを更新
         updateNotifications({ enabled: true });
+
+        // Firestore/IndexedDBにも保存（ユーザーがログインしている場合）
+        if (user?.uid && settings) {
+          try {
+            await updatePartialSettings(user.uid, {
+              notifications: {
+                ...settings.notifications,
+                enabled: true,
+              },
+            });
+          } catch (err) {
+            console.warn('[PushPermissionPrompt] Failed to sync notification settings:', err);
+          }
+        }
+
         setIsVisible(false);
         onSubscribed?.();
       }
