@@ -51,6 +51,9 @@
 - **components/ui/Button.tsx** - 7バリアント、アクセシビリティ対応
 - **components/ui/Card.tsx** - Card, CardHeader, CardContent, CardFooter
 - **components/ui/Modal.tsx** - Portal、フォーカストラップ、iOS Safe Area対応
+  - `closeOnBackdropClick` - バックドロップクリックで閉じるか（デフォルト: true）
+  - `closeOnEscape` - ESCキーで閉じるか（デフォルト: true）✅ NEW! (2025-12-07)
+  - `showCloseButton` - 閉じるボタンを表示するか（デフォルト: true）
 - **components/ui/Celebration.tsx** - 祝福アニメーション（我慢成功時等に使用）
 - **components/ui/Switch.tsx** - トグルスイッチコンポーネント（アクセシビリティ対応、44px最小タッチターゲット） ✅ NEW! (2025-11-30)
 
@@ -219,6 +222,8 @@ swan/
    - 10種類のタグ（食後、休憩、ストレス等）
    - 複数選択可能
    - 絵文字付きUI
+   - 後から記録機能（過去の日時を選択可能）
+   - モーダルは「キャンセル」「記録する」ボタンでのみ閉じる（誤操作防止）✅ NEW! (2025-12-07)
 
 5. **フィードバックメッセージ**
    - 我慢成功時: 励ましメッセージ（6種類からランダム）
@@ -329,9 +334,11 @@ swan/
   - SVG円形プログレスバー（Teal → Orange グラデーション）
   - 完了コールバック対応
 - **components/sos/BreathingCircle.tsx** - 呼吸ガイドコンポーネント ✅
-  - 4フェーズ自動遷移
+  - 4フェーズ自動遷移（吸う4秒・止める4秒・吐く6秒・休憩2秒）
   - スケールアニメーション（0.6～1.5倍）
-  - フェーズごとのメッセージ表示
+  - 現在のフェーズと残り秒数を大きく表示
+  - 次のフェーズと秒数を予告表示（「次 → 息を止めて (4秒)」形式）
+  - サイクル進捗表示（1/5～5/5）
   - プログレスバー付き
 - **components/sos/SOSModal.tsx** - SOSモーダル ✅
   - ダッシュボードから「吸いたい」ボタンで表示

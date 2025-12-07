@@ -287,6 +287,9 @@ export default function DashboardPage() {
         }}
         title="状況を選択（任意）"
         size="md"
+        closeOnBackdropClick={false}
+        closeOnEscape={false}
+        showCloseButton={false}
       >
         <div className="space-y-4">
           <p className="text-sm text-neutral-600 dark:text-neutral-400">

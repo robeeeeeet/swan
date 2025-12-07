@@ -10,6 +10,7 @@ export interface ModalProps {
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'full';
   closeOnBackdropClick?: boolean;
+  closeOnEscape?: boolean;
   showCloseButton?: boolean;
   initialFocus?: React.RefObject<HTMLElement>;
 }
@@ -40,6 +41,7 @@ export default function Modal({
   children,
   size = 'md',
   closeOnBackdropClick = true,
+  closeOnEscape = true,
   showCloseButton = true,
   initialFocus,
 }: ModalProps) {
@@ -56,7 +58,7 @@ export default function Modal({
 
   // Handle ESC key press
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.key === 'Escape') {
+    if (event.key === 'Escape' && closeOnEscape) {
       onClose();
     }
 
@@ -76,7 +78,7 @@ export default function Modal({
         firstElement?.focus();
       }
     }
-  }, [onClose]);
+  }, [onClose, closeOnEscape]);
 
   // Manage focus and body scroll
   useEffect(() => {

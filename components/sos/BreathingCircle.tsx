@@ -32,12 +32,21 @@ export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete, onBackTo
 
   const TOTAL_CYCLES = 5; // 5サイクルで完了
 
-  // フェーズごとのメッセージ
+  // フェーズごとのメッセージ（詳細な指示）
   const PHASE_MESSAGES: Record<BreathingPhase, string> = {
     inhale: '鼻からゆっくり息を吸って',
     hold: '息を止めて',
     exhale: '口からゆっくり息を吐いて',
     pause: '自然に呼吸して',
+  };
+
+  // フェーズの順序
+  const PHASE_ORDER: BreathingPhase[] = ['inhale', 'hold', 'exhale', 'pause'];
+
+  // 次のフェーズを取得
+  const getNextPhase = (currentPhase: BreathingPhase): BreathingPhase => {
+    const currentIndex = PHASE_ORDER.indexOf(currentPhase);
+    return PHASE_ORDER[(currentIndex + 1) % PHASE_ORDER.length];
   };
 
   // フェーズごとの円のサイズ（スケール）
@@ -62,10 +71,9 @@ export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete, onBackTo
     }
 
     // 次のフェーズへ移行
-    const phases: BreathingPhase[] = ['inhale', 'hold', 'exhale', 'pause'];
-    const currentIndex = phases.indexOf(phase);
-    const nextIndex = (currentIndex + 1) % phases.length;
-    const nextPhase = phases[nextIndex];
+    const currentIndex = PHASE_ORDER.indexOf(phase);
+    const nextIndex = (currentIndex + 1) % PHASE_ORDER.length;
+    const nextPhase = PHASE_ORDER[nextIndex];
 
     // pauseの終わりでサイクルカウント増加
     if (phase === 'pause') {
@@ -162,7 +170,7 @@ export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete, onBackTo
       </div>
 
       {/* フェーズメッセージ */}
-      <div className="text-center px-4 h-20 flex items-center justify-center">
+      <div className="text-center px-4 min-h-[140px] flex flex-col items-center justify-center">
         {!isActive && !isCompleted && (
           <p className="text-lg text-gray-600 dark:text-gray-300">
             深呼吸で心を落ち着けましょう
@@ -170,11 +178,30 @@ export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete, onBackTo
         )}
 
         {isActive && (
-          <div className="space-y-2">
-            <p className="text-2xl font-semibold text-teal-600 dark:text-teal-400">
-              {PHASE_MESSAGES[phase]}
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="space-y-4">
+            {/* 現在のフェーズ - 詳細な指示 */}
+            <div className="bg-teal-50 dark:bg-teal-900/30 rounded-2xl px-6 py-4">
+              <p className="text-2xl font-semibold text-teal-700 dark:text-teal-300 mb-2">
+                {PHASE_MESSAGES[phase]}
+              </p>
+              <p className="text-4xl font-bold text-teal-600 dark:text-teal-400 tabular-nums">
+                {BREATHING_PATTERN[phase] - secondsInPhase}秒
+              </p>
+            </div>
+
+            {/* 次のフェーズ - 具体的な指示 */}
+            <div className="text-gray-500 dark:text-gray-400 text-sm">
+              <span>次 → </span>
+              <span className="font-medium">
+                {PHASE_MESSAGES[getNextPhase(phase)]}
+              </span>
+              <span className="ml-1">
+                ({BREATHING_PATTERN[getNextPhase(phase)]}秒)
+              </span>
+            </div>
+
+            {/* サイクル進捗 */}
+            <p className="text-xs text-gray-400 dark:text-gray-500">
               サイクル {cycleCount + 1} / {TOTAL_CYCLES}
             </p>
           </div>
@@ -199,7 +226,7 @@ export const BreathingCircle: FC<BreathingCircleProps> = ({ onComplete, onBackTo
             <div
               className="h-full bg-gradient-to-r from-teal-500 to-teal-600 transition-all duration-1000 ease-linear"
               style={{
-                width: `${((cycleCount * 4 + ['inhale', 'hold', 'exhale', 'pause'].indexOf(phase) + 1) / (TOTAL_CYCLES * 4)) * 100}%`,
+                width: `${((cycleCount * 4 + PHASE_ORDER.indexOf(phase) + 1) / (TOTAL_CYCLES * 4)) * 100}%`,
               }}
             />
           </div>
