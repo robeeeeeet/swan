@@ -565,10 +565,12 @@ function Dashboard() {
 ### Tips評価システム（NEW! 2025-12-07）
 
 #### Good/Bad評価の使い方
+同じユーザーが同じTipsに対して何度でも評価可能（複数回評価対応）。
+
 ```typescript
 import { addTipRating, getTipRating, getAllTipRatings } from '@/lib/indexeddb';
 
-// 評価を追加
+// 評価を追加（何度でも追加可能）
 await addTipRating(tipId, 'good'); // または 'bad'
 
 // 特定Tipの評価を取得

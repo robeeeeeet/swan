@@ -41,7 +41,6 @@ function RandomTipComponent() {
   const [key, setKey] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [hasRated, setHasRated] = useState(false);
   const [currentRating, setCurrentRating] = useState<TipRating | null>(null);
   const [ratingFeedback, setRatingFeedback] = useState<'good' | 'bad' | null>(null);
 
@@ -57,7 +56,6 @@ function RandomTipComponent() {
         excludeId
       );
       setTip(newTip);
-      setHasRated(false);
       setRatingFeedback(null);
 
       // 現在の評価を取得
@@ -81,16 +79,15 @@ function RandomTipComponent() {
     setTimeout(() => setIsRefreshing(false), 500);
   }, [fetchTip, tip?.id]);
 
-  // 評価を送信する関数
+  // 評価を送信する関数（何度でも評価可能）
   const handleRating = useCallback(
     async (rating: TipRatingType) => {
-      if (!tip || hasRated) return;
+      if (!tip) return;
 
       try {
         // IndexedDB（ローカル）に保存
         const updatedRating = await addTipRating(tip.id, rating);
         setCurrentRating(updatedRating);
-        setHasRated(true);
         setRatingFeedback(rating);
 
         // Firestore（クラウド）にも保存（ユーザーがログインしている場合）
@@ -103,15 +100,15 @@ function RandomTipComponent() {
           }
         }
 
-        // フィードバック表示後、次のTipを取得
+        // フィードバック表示をリセット（連続評価のため）
         setTimeout(() => {
-          handleRefresh();
-        }, 1500);
+          setRatingFeedback(null);
+        }, 800);
       } catch (error) {
         console.error('Failed to save rating:', error);
       }
     },
-    [tip, hasRated, handleRefresh, user?.uid]
+    [tip, user?.uid]
   );
 
   // 初期化
@@ -238,16 +235,13 @@ function RandomTipComponent() {
               {/* Good ボタン */}
               <button
                 onClick={() => handleRating('good')}
-                disabled={hasRated}
                 className={`
                   flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium
                   transition-all duration-200 min-h-[36px]
                   ${
-                    hasRated && ratingFeedback === 'good'
-                      ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
-                      : hasRated
-                        ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 cursor-not-allowed'
-                        : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 active:scale-95'
+                    ratingFeedback === 'good'
+                      ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 scale-110'
+                      : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 active:scale-95'
                   }
                 `}
                 aria-label="役立ちそう"
@@ -266,16 +260,13 @@ function RandomTipComponent() {
               {/* Bad ボタン */}
               <button
                 onClick={() => handleRating('bad')}
-                disabled={hasRated}
                 className={`
                   flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium
                   transition-all duration-200 min-h-[36px]
                   ${
-                    hasRated && ratingFeedback === 'bad'
-                      ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300'
-                      : hasRated
-                        ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500 cursor-not-allowed'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 active:scale-95'
+                    ratingFeedback === 'bad'
+                      ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 scale-110'
+                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 active:scale-95'
                   }
                 `}
                 aria-label="今は使えない"
